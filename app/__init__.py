@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask
+from flask import Flask, render_template
 from flask_cors import CORS
 from .models import db
 from .routes import main_routes
@@ -27,6 +27,14 @@ def create_app(config_class=Config):
     # from .auth import auth_routes
     # app.register_blueprint(auth_routes)
     app.register_blueprint(auth_routes, url_prefix='/auth')
+
+
+    #gestion erreurs
+    @app.errorhandler(404)
+    def not_found_error(error):
+        # On retourne notre template personnalisé et le code 404
+        return render_template('errors/404.html'), 404
+
 
     # Créer les tables de la base de données si elles n'existent pas
     with app.app_context():
