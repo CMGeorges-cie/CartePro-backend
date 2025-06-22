@@ -22,6 +22,7 @@ def generate_qr():
         
     return send_file(image_buffer, mimetype='image/png')
 
+# TODO: when post new card response is not found 
 @main_routes.route('/cards', methods=['POST'])
 def create_card():
     data = request.json
