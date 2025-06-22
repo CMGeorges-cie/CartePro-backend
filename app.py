@@ -12,8 +12,23 @@ app = Flask(__name__)
 # Configurations
 UPLOAD_FOLDER = 'uploads'
 DEFAULT_LOGO = 'static/logo.png'
+DATA_FILE = 'data/cards.json'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs('static', exist_ok=True)
+os.makedirs('data', exist_ok=True)
+
+# Helper to load cards data
+def load_cards():
+    if not os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'w') as f:
+            json.dump({}, f)
+    with open(DATA_FILE, 'r') as f:
+        return json.load(f)
+
+# Helper to save cards data
+def save_cards(data):
+    with open(DATA_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
 
 @app.route('/')
 def index():
@@ -55,6 +70,42 @@ def generate_qr():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/create_card', methods=['POST'])
+def create_card():
+    data = request.json
+    required_fields = ["name", "email", "title"]
+
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Missing required fields: name, email, title"}), 400
+
+    cards = load_cards()
+    card_id = str(uuid.uuid4())
+
+    card_data = {
+        "id": card_id,
+        "name": data["name"],
+        "email": data["email"],
+        "title": data["title"],
+        "phone": data.get("phone", ""),
+        "website": data.get("website", ""),
+        "instagram": data.get("instagram", ""),
+        "linkedin": data.get("linkedin", "")
+    }
+
+    cards[card_id] = card_data
+    save_cards(cards)
+
+    return jsonify({"message": "Card created successfully", "id": card_id}), 201
+
+@app.route('/card/<card_id>', methods=['GET'])
+def get_card(card_id):
+    cards = load_cards()
+    card = cards.get(card_id)
+    if not card:
+        return jsonify({"error": "Card not found."}), 404
+    return jsonify(card)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
