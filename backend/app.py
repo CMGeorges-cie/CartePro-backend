@@ -108,4 +108,7 @@ def get_card(card_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # IMPORTANT: Use os.environ.get("PORT") and bind to '0.0.0.0'
+    port = int(os.environ.get("PORT", 5000)) # Default to 5000 for local testing
+    app.run(host='0.0.0.0', port=port, debug=False)  # Set debug=True for development, change to False in production
+   # app.run(debug=True)
