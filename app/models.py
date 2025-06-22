@@ -33,6 +33,7 @@ class User(db.Model):
     # On ne stocke JAMAIS les mots de passe en clair
     password_hash = db.Column(db.String(256), nullable=False)
     stripe_customer_id = db.Column(db.String(120), unique=True, nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)  # Pour gérer les rôles d'utilisateur
 
     def set_password(self, password):
         """Crée un hash sécurisé du mot de passe."""

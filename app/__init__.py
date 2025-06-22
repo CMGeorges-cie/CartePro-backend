@@ -6,6 +6,7 @@ from .routes import main_routes
 from .auth import auth_routes
 from config import Config
 import os
+from .admin import admin
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
@@ -20,6 +21,7 @@ def create_app(config_class=Config):
     # Initialiser les extensions
     db.init_app(app)
     CORS(app)
+    admin.init_app(app) # Initialiser Flask-Admin
 
     # Enregistrer le blueprint
     app.register_blueprint(main_routes)
