@@ -10,9 +10,9 @@ import stripe
 
 # Dictionnaire de nos "Price IDs" que tu vas créer dans ton tableau de bord Stripe
 #STRIPE_PRICES = {
-    'one_time': 'price_1Rcxsq00padFPyonZ4wx7Sdd', # Remplace par ton Price ID Stripe
-    'pro_annual': 'price_1RcxxJ00padFPyonY8Jc8jtK'
-}
+ #   'one_time': 'price_1Rcxsq00padFPyonZ4wx7Sdd', # Remplace par ton Price ID Stripe
+ #   'pro_annual': 'price_1RcxxJ00padFPyonY8Jc8jtK'
+# }
 
 main_routes = Blueprint('main', __name__)
 
