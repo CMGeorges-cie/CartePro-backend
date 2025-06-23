@@ -3,10 +3,12 @@ from flask import Blueprint, request, jsonify, send_file, render_template, redir
 from .models import db, Card
 from .services import generate_qr_code_with_logo
 import stripe
+# Assurez-vous d'avoir installé stripe avec `pip install stripe`
+
 
 
 #TODO: Configure Stripe avec ta clé secrète (à mettre dans config.py ou .env)
-# stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
+stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
 
 # Dictionnaire de nos "Price IDs" que tu vas créer dans ton tableau de bord Stripe
 #STRIPE_PRICES = {
