@@ -34,8 +34,7 @@ jobs:
           # Stoppe le build s'il y a des erreurs de style ou de syntaxe.
           # --count --select=E9,F63,F7,F82 --show-source --statistics
           # --exit-zero ne bloque pas pour les erreurs de style, juste les erreurs graves.
-          flake8 . -
-            -count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Exécuter des tests unitaires (placeholder)
         run: |
