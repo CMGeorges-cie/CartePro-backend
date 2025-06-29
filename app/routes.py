@@ -1,8 +1,9 @@
 # app/routes.py
 from flask import Blueprint, request, jsonify, send_file, render_template, redirect, current_app
-from .models import db, Card
+from .models import  Card
 from .services import generate_qr_code_with_logo
 import stripe
+from . import db
 # Assurez-vous d'avoir installé stripe avec `pip install stripe`
 
 
