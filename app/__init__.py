@@ -1,12 +1,14 @@
 # app/__init__.py
 from flask import Flask, render_template
 from flask_cors import CORS
-from .models import db
 from .routes import main_routes
 from .auth import auth_routes
 from config import Config
 import os
 from .admin import admin
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)

@@ -1,11 +1,8 @@
 # app/models.py
 
-from flask_sqlalchemy import SQLAlchemy
+from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
-
-# On crée l'instance de la base de données qui sera utilisée partout
-db = SQLAlchemy()
 
 def generate_uuid():
     return str(uuid.uuid4())
