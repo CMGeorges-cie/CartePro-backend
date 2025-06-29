@@ -7,7 +7,7 @@ on:
   push:
     branches: [master] # ou [ master ] si tu utilises toujours l'ancien nom
   pull_request:
-    branches: [master] # ou [ master ]
+    branches: [master, dev] # ou [ master ]
 
 jobs:
   build-and-test:
