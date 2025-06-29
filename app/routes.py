@@ -7,9 +7,6 @@ import stripe
 
 
 
-#TODO: Configure Stripe avec ta clé secrète (à mettre dans config.py ou .env)
-stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
-
 # Dictionnaire de nos "Price IDs" que tu vas créer dans ton tableau de bord Stripe
 #STRIPE_PRICES = {
  #   'one_time': 'price_1Rcxsq00padFPyonZ4wx7Sdd', # Remplace par ton Price ID Stripe
@@ -143,10 +140,13 @@ def stripe_webhook():
     
     return 'Success', 200
 
+import stripe
+from flask import current_app
 
 @main_routes.route('/config', methods=['GET'])
 def get_config():
     # On récupère tous les produits actifs depuis Stripe
+    stripe.api_key = current_app.config['STRIPE_SECRET_KEY']
     # L'argument 'expand' permet de récupérer le prix par défaut en une seule requête
     products = stripe.Product.list(active=True, expand=['data.default_price'])
     

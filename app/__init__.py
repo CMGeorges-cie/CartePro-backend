@@ -8,6 +8,7 @@ import os
 from .admin import admin
 from flask_sqlalchemy import SQLAlchemy
 from .extensions import db
+import stripe
 
 
 
@@ -26,6 +27,10 @@ def create_app(config_class=Config):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.secret_key = app.config['SECRET_KEY']  # Utiliser la clé secrète de la config
     app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
+    #TODO: Configure Stripe avec ta clé secrète (à mettre dans config.py ou .env)
+    stripe.api_key = app.config['STRIPE_SECRET_KEY']
+
+
     
     db.init_app(app)
     CORS(app)
