@@ -70,22 +70,27 @@ def create_card():
     if not all(field in data for field in required):
         return jsonify({"error": "Missing required fields"}), 400
     
-    new_card = Card(
-        user_id=current_user.id,  # Assuming user_id is provided in the request
-        name=data['name'],
-        email=data['email'],
-        title=data['title'],
-        phone=data.get('phone'),
-        website=data.get('website'),
-        instagram=data.get('instagram'),
-        linkedin=data.get('linkedin')
-    )
-    db.session.add(new_card)
-    db.session.commit()
-    
-    return jsonify({"message": "Card created successfully", "id": new_card.id}), 201
+    try:
+        new_card = Card(
+            user_id=current_user.id,  # Assuming user_id is provided in the request
+            name=data['name'],
+            email=data['email'],
+            title=data['title'],
+            phone=data.get('phone'),
+            website=data.get('website'),
+            instagram=data.get('instagram'),
+            linkedin=data.get('linkedin')
+        )
+        db.session.add(new_card)
+        db.session.commit()
+        
+        return jsonify({"message": "Card created successfully", "id": new_card.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @main_routes.route('/cards/<string:card_id>', methods=['GET'])
+@login_required  # Assurez-vous que l'utilisateur est authentifié
 def get_card(card_id):
     card = Card.query.get_or_404(card_id)
     return jsonify({
@@ -94,21 +99,33 @@ def get_card(card_id):
     })
 
 @main_routes.route('/cards/<string:card_id>', methods=['PUT'])
+@login_required  # Assurez-vous que l'utilisateur est authentifié
 def update_card(card_id):
     card = Card.query.get_or_404(card_id)
     data = request.json
     for key, value in data.items():
         if hasattr(card, key):
             setattr(card, key, value)
-    db.session.commit()
-    return jsonify({"message": "Card updated successfully"})
-
+    try:
+        db.session.commit()
+        return jsonify({"message": "Card updated successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
 @main_routes.route('/cards/<string:card_id>', methods=['DELETE'])
+@login_required  # Assurez-vous que l'utilisateur est authentifié
 def delete_card(card_id):
     card = Card.query.get_or_404(card_id)
-    db.session.delete(card)
-    db.session.commit()
-    return jsonify({"message": "Card deleted successfully"})
+    if card.user_id != current_user.id:
+        return jsonify({"error": "You do not have permission to delete this card"}), 403
+    try:
+        db.session.delete(card)
+        db.session.commit()
+        return jsonify({"message": "Card deleted successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @main_routes.route('/view/<string:card_id>', methods=['GET'])
 def view_card(card_id):
