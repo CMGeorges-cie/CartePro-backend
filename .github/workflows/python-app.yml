@@ -5,7 +5,7 @@ name: Python Flask CI/CD
 on:
   # Déclenche le workflow sur les push et pull requests vers la branche principale
   push:
-    branches: [master] # ou [ master ] si tu utilises toujours l'ancien nom
+    branches: [dev] # ou [ master ] si tu utilises toujours l'ancien nom
   pull_request:
     branches: [master, dev] # ou [ master ]
 
