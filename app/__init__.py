@@ -31,7 +31,6 @@ def create_app(config_class=Config):
     app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
     
     # Configurer Stripe
-    #TODO: Configure Stripe avec ta clé secrète (à mettre dans config.py ou .env)
     stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 

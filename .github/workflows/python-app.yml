@@ -47,8 +47,7 @@ jobs:
       - name: Exécuter des tests unitaires (placeholder)
         run: |
           echo "Tests unitaires à venir avec Pytest..."
-          python tests/test_api.py
-          python tests/test_auth.py
+          pytest tests/
 
       #- name: Exécuter des tests (avec la clé API)
       # C'est ici la magie ! On injecte le secret GitHub
