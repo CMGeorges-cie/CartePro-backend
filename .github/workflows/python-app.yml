@@ -26,6 +26,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest requests
 
       - name: Linter avec Flake8
         run: |
@@ -36,10 +37,9 @@ jobs:
           # --exit-zero ne bloque pas pour les erreurs de style, juste les erreurs graves.
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Installer requests pour les tests API
-        run: pip install requests
-
       - name: Lancer le serveur Flask en arrière-plan
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: |
           python run.py &
           sleep 5
@@ -50,8 +50,6 @@ jobs:
           python tests/test_api.py
 
       - name: Exécuter des tests (avec la clé API)
-        env:
-          STRIPE_API_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         # C'est ici la magie ! On injecte le secret GitHub
         # dans une variable d'environnement pour le script de test.
         run: |
