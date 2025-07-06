@@ -7,7 +7,7 @@ from config import Config
 import os
 from .admin import admin
 from flask_sqlalchemy import SQLAlchemy
-from .extensions import db
+from .extensions import db, login_manager
 import stripe
 
 
@@ -38,6 +38,8 @@ def create_app(config_class=Config):
     db.init_app(app)
     CORS(app)
     admin.init_app(app) # Initialiser Flask-Admin
+    login_manager.init_app(app)  # Initialiser Flask-Login
+    login_manager.login_view = 'auth.login'  # Définir la vue de connexion
 
     # Enregistrer le blueprint
     app.register_blueprint(main_routes, url_prefix='/api/v1')

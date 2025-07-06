@@ -45,6 +45,8 @@ jobs:
           sleep 5
 
       - name: Exécuter des tests unitaires (placeholder)
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: |
           echo "Tests unitaires à venir avec Pytest..."
           pytest tests/

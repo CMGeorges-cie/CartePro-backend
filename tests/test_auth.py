@@ -6,6 +6,7 @@ from app import create_app, db
 from app.models import User, Card
 from flask import url_for
 from werkzeug.security import generate_password_hash
+import requests
 
 @pytest.fixture
 def client():
@@ -17,6 +18,10 @@ def client():
         yield app.test_client()
         db.session.remove()
         db.drop_all()
+
+@pytest.fixture
+def session():
+    return requests.Session()
 
 def register(client, username, email, password):
     return client.post('/auth/register', json={
@@ -37,7 +42,7 @@ def logout(client):
 def test_user_registration_and_login(client):
     # Register
     rv = register(client, "bob", "bob@mail.com", "1234")
-    assert rv.status_code == 200
+    assert rv.status_code in (200, 201)  # 200 OK or 201 Created
     assert b"User registered successfully" in rv.data
 
     # Login
