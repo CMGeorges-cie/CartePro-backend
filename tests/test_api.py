@@ -1,4 +1,9 @@
+import pytest
 import requests
+
+@pytest.fixture
+def session():
+    return requests.Session()
 
 BASE_URL = "http://localhost:5000/api/v1"
 AUTH_URL = "http://localhost:5000/auth"

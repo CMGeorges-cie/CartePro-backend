@@ -6,6 +6,7 @@ from .auth import auth_routes
 from config import Config
 import os
 from .admin import admin
+from .models import User
 from flask_sqlalchemy import SQLAlchemy
 from .extensions import db, login_manager
 import stripe
@@ -44,6 +45,10 @@ def create_app(config_class=Config):
     # Enregistrer le blueprint
     app.register_blueprint(main_routes, url_prefix='/api/v1')
     app.register_blueprint(auth_routes, url_prefix='/auth')
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
 
     #gestion erreurs
