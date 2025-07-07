@@ -1,6 +1,7 @@
 # app/auth.py
 
 from flask import Blueprint, request, jsonify, session
+from flask_login import login_user, logout_user, login_required, current_user
 from .models import db, User
 
 auth_routes = Blueprint('auth', __name__)
@@ -35,32 +36,22 @@ def login():
 
     if not username or not password:
         return jsonify({"error": "Username and password required."}), 400
-    
-    user = User.query.filter_by(username=username).first()
 
-    # Vérifie si l'utilisateur existe ET si le mot de passe est correct
+    user = User.query.filter_by(username=username).first()
     if not user or not user.check_password(password):
         return jsonify({"error": "Invalid credentials."}), 401
 
-    # Stocke l'ID de l'utilisateur dans la session
-    session.clear()
-    session["user_id"] = user.id
-    
+    login_user(user)  # <-- C'est ça qui gère la session Flask-Login
+
     return jsonify({"message": "Login successful."})
 
 @auth_routes.route('/logout', methods=['POST'])
+@login_required
 def logout():
-    session.clear()
+    logout_user()
     return jsonify({"message": "Logged out successfully."})
 
 @auth_routes.route('/me', methods=['GET'])
+@login_required
 def me():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    return jsonify({"id": user.id, "username": user.username})
+    return jsonify({"id": current_user.id, "username": current_user.username})
