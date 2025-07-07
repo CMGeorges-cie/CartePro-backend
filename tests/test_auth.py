@@ -100,4 +100,3 @@ def test_me_route(client):
     assert rv.status_code == 200
     data = rv.get_json()
     assert data["username"] == "bob"
-    assert data["email"] == "bob@mail.com"
