@@ -46,7 +46,7 @@ def test_user_registration_and_login(client):
     assert "User" in rv.get_json()["message"]
 
     # Login
-    rv = login(client, "bob@mail.com", "1234")
+    rv = login(client, "bob", "1234")
     assert rv.status_code == 200
     assert b"Logged in successfully" in rv.data
 
