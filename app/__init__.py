@@ -30,7 +30,8 @@ def create_app(config_class=Config):
     except OSError:
         pass
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'app.db')
+    if not app.config.get('SQLALCHEMY_DATABASE_URI'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.secret_key = app.config['SECRET_KEY']
     app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
