@@ -52,7 +52,6 @@ def create_app(config_class=Config):
         app.register_blueprint(admin_bp, url_prefix='/api/v1/admin')
         app.register_blueprint(public_bp)  # index, /view/:id, etc.
 
-    app.register_blueprint(api_bp, url_prefix='/api/v1')
     register_routes(app)                                    # Routes API
 
     # User loader
