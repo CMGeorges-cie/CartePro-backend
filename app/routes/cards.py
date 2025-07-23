@@ -22,7 +22,7 @@ def create_card():
     db.session.commit()
     return jsonify({'message': 'Card created', 'id': card.id}), 201
 
-@cards_bp.route('/<int:card_id>', methods=['GET'])
+@cards_bp.route('/<string:card_id>', methods=['GET'])
 @login_required
 def get_card(card_id):
     card = Card.query.get_or_404(card_id)
@@ -30,7 +30,7 @@ def get_card(card_id):
         return jsonify({'error': 'Unauthorized'}), 403
     return jsonify(card.serialize())
 
-@cards_bp.route('/<int:card_id>', methods=['PUT'])
+@cards_bp.route('/<string:card_id>', methods=['PUT'])
 @login_required
 def update_card(card_id):
     card = Card.query.get_or_404(card_id)
@@ -47,7 +47,7 @@ def update_card(card_id):
     db.session.commit()
     return jsonify({'message': 'Card updated'})
 
-@cards_bp.route('/<int:card_id>', methods=['DELETE'])
+@cards_bp.route('/<string:card_id>', methods=['DELETE'])
 @login_required
 def delete_card(card_id):
     card = Card.query.get_or_404(card_id)
