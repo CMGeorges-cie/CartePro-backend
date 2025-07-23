@@ -24,6 +24,21 @@ class Card(db.Model):
     plan_type = db.Column(db.String(20), default='none') # ex: 'one_time', 'pro_annual'
     is_active = db.Column(db.Boolean, default=True)
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "title": self.title,
+            "email": self.email,
+            "phone": self.phone,
+            "website": self.website,
+            "instagram": self.instagram,
+            "linkedin": self.linkedin,
+            "user_id": self.user_id,
+            "plan_type": self.plan_type,
+            "is_active": self.is_active,
+        }
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -35,6 +50,16 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)  # Pour gérer les rôles d'utilisateur
     cards = db.relationship('Card', backref='user', lazy=True)
     subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "role": self.role,
+            "stripe_customer_id": self.stripe_customer_id,
+            "is_admin": self.is_admin,
+        }
 
     def set_password(self, password):
         """Crée un hash sécurisé du mot de passe."""
