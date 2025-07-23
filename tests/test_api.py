@@ -1,12 +1,12 @@
 import pytest
 import requests
 
+BASE_URL = "http://localhost:5000/api/v1"
+AUTH_URL = "http://localhost:5000/auth"
+
 @pytest.fixture
 def session():
     return requests.Session()
-
-BASE_URL = "http://localhost:5000/api/v1"
-AUTH_URL = "http://localhost:5000/auth"
 
 def print_response(resp):
     print(f"[{resp.request.method}] {resp.url}")
@@ -17,16 +17,36 @@ def print_response(resp):
         print("Response (non-JSON):", resp.text)
     print("-" * 60)
 
+def register_and_login(session, username, email, password):
+    # Register
+    resp = session.post(f"{AUTH_URL}/register", json={
+        "username": username,
+        "email": email,
+        "password": password
+    })
+    print_response(resp)
+    assert resp.status_code in (200, 201)
+    # Login
+    resp = session.post(f"{AUTH_URL}/login", json={
+        "username": username,
+        "password": password
+    })
+    print_response(resp)
+    assert resp.status_code == 200
+
 def test_health(session):
     resp = session.get(f"{BASE_URL}/")
     print_response(resp)
+    assert resp.status_code in (200, 404)  # 404 si pas de route /api/v1/
 
 def test_generate_qr(session):
     data = {"url": "https://example.com"}
-    resp = session.post(f"{BASE_URL}/generate", json=data)
+    resp = session.post(f"{BASE_URL}/qr/generate", json=data)
     print_response(resp)
+    assert resp.status_code == 200
 
 def test_card_lifecycle(session):
+    register_and_login(session, "alice", "alice@example.com", "testpass123")
     # Création
     data = {
         "name": "Alice Test",
@@ -39,62 +59,55 @@ def test_card_lifecycle(session):
     }
     resp = session.post(f"{BASE_URL}/cards", json=data)
     print_response(resp)
-    if resp.status_code not in (200, 201) or 'id' not in resp.json():
-        print("❌ Création de carte échouée, tests suivants annulés.")
-        return None
-    card_id = resp.json()['id']
+    assert resp.status_code in (200, 201)
+    card_id = resp.json().get('id')
+    assert card_id
 
     # Lecture
     resp = session.get(f"{BASE_URL}/cards/{card_id}")
     print_response(resp)
+    assert resp.status_code == 200
 
     # Mise à jour
     update_data = {"phone": "987-654-3210"}
     resp = session.put(f"{BASE_URL}/cards/{card_id}", json=update_data)
     print_response(resp)
+    assert resp.status_code == 200
 
     # Suppression
     resp = session.delete(f"{BASE_URL}/cards/{card_id}")
     print_response(resp)
+    assert resp.status_code == 200
 
-    return card_id
+def test_get_user_cards(session):
+    register_and_login(session, "bob", "bob@example.com", "testpass456")
+    resp = session.get(f"{BASE_URL}/cards")
+    print_response(resp)
+    assert resp.status_code == 200
 
 def test_checkout_session(session):
     # Remplace price_XXXXXX par un vrai Price ID Stripe pour un vrai test
     data = {"price_id": "price_XXXXXX"}
-    resp = session.post(f"{BASE_URL}/create-checkout-session", json=data)
+    resp = session.post(f"{BASE_URL}/stripe/create-checkout-session", json=data)
     print_response(resp)
+    assert resp.status_code in (200, 400, 500)
 
 def test_config(session):
-    resp = session.get(f"{BASE_URL}/config")
+    resp = session.get(f"{BASE_URL}/stripe/config")
     print_response(resp)
+    assert resp.status_code == 200
 
-def register_and_login(session, username, email, password):
-    # Register
-    resp = session.post(f"{AUTH_URL}/register", json={
-        "username": username,
-        "email": email,
-        "password": password
-    })
+def test_admin_routes(session):
+    # Ce test suppose que tu as un utilisateur admin avec username "admin"
+    register_and_login(session, "admin", "admin@example.com", "adminpass")
+    resp = session.get(f"{BASE_URL}/admin/users")
     print_response(resp)
-    # Login
-    resp = session.post(f"{AUTH_URL}/login", json={
-        "email": email,
-        "password": password
-    })
-    print_response(resp)
+    assert resp.status_code in (200, 403)
 
-if __name__ == "__main__":
-    session = requests.Session()
-    print("=== Register & Login ===")
-    register_and_login(session, "alice", "alice@example.com", "testpass123")
-    print("=== Test API Health ===")
-    test_health(session)
-    print("=== Test QR Code Generation ===")
-    test_generate_qr(session)
-    print("=== Test Card Lifecycle ===")
-    test_card_lifecycle(session)
-    print("=== Test Stripe Checkout Session ===")
-    test_checkout_session(session)
-    print("=== Test Stripe Config ===")
-    test_config(session)
+    resp = session.get(f"{BASE_URL}/admin/cards")
+    print_response(resp)
+    assert resp.status_code in (200, 403)
+
+    resp = session.get(f"{BASE_URL}/admin/backups")
+    print_response(resp)
+    assert resp.status_code in (200, 403)

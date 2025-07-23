@@ -6,7 +6,6 @@ from app import create_app, db
 from app.models import User, Card
 from flask import url_for
 from werkzeug.security import generate_password_hash
-import requests
 
 @pytest.fixture
 def client():
@@ -18,10 +17,6 @@ def client():
         yield app.test_client()
         db.session.remove()
         db.drop_all()
-
-@pytest.fixture
-def session():
-    return requests.Session()
 
 def register(client, username, email, password):
     return client.post('/auth/register', json={
@@ -42,17 +37,18 @@ def logout(client):
 def test_user_registration_and_login(client):
     # Register
     rv = register(client, "bob", "bob@mail.com", "1234")
-    assert rv.status_code in (200, 201)  # 200 OK or 201 Created
+    assert rv.status_code in (200, 201)
     assert "User" in rv.get_json()["message"]
 
     # Login
     rv = login(client, "bob", "1234")
     assert rv.status_code == 200
-    assert rv.get_json()["message"]
+    assert "Login" in rv.get_json()["message"]
+
     # Logout
     rv = logout(client)
     assert rv.status_code == 200
-    assert b"Logged out successfully" in rv.data
+    assert "Logged out" in rv.get_json()["message"]
 
 def test_card_crud(client):
     # Register and login
@@ -76,12 +72,12 @@ def test_card_crud(client):
     # Update card
     rv = client.put(f'/api/v1/cards/{card_id}', json={"title": "CTO"})
     assert rv.status_code == 200
-    assert b"Card updated successfully" in rv.data
+    assert "updated" in rv.get_json()["message"]
 
     # Delete card
     rv = client.delete(f'/api/v1/cards/{card_id}')
     assert rv.status_code == 200
-    assert b"Card deleted successfully" in rv.data
+    assert "deleted" in rv.get_json()["message"]
 
 def test_protected_routes_require_login(client):
     # Try to create card without login
@@ -90,7 +86,7 @@ def test_protected_routes_require_login(client):
         "email": "noauth@mail.com",
         "title": "Hacker"
     })
-    assert rv.status_code in (401, 302)  # 401 Unauthorized or 302 Redirect to login
+    assert rv.status_code in (401, 302)
 
 def test_me_route(client):
     register(client, "bob", "bob@mail.com", "1234")
