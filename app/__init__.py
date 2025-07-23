@@ -18,23 +18,21 @@ from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
 load_dotenv()
 
 
+def create_app(config_class: type[Config] = Config) -> Flask:
+    """Application factory."""
 
-def create_app(config_class=Config):
-    # Création de l'application Flask
-    if config_class not in [DevelopmentConfig, ProductionConfig, TestingConfig]:
-        raise ValueError("Invalid configuration class provided.")
-    
-    # Charger dynamiquement la bonne configuration
-    env = os.environ.get("FLASK_ENV", "development")
+    env = os.environ.get("FLASK_ENV")
 
-    if env == "production":
-        config_class = ProductionConfig
-    elif env == "testing":
-        config_class = TestingConfig
-    else:
-        app.config.from_object(DevelopmentConfig)
+    # Détermination automatique de la configuration si celle par défaut est utilisée
+    if config_class is Config:
+        if env == "production":
+            config_class = ProductionConfig
+        elif env == "testing":
+            config_class = TestingConfig
+        else:
+            config_class = DevelopmentConfig
 
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
     app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
 

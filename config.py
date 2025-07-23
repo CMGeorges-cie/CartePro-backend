@@ -30,4 +30,4 @@ class ProductionConfig(Config):
     """🚀 Configuration pour la production"""
     DEBUG = False
     TESTING = False
-    # Possibilité d'ajouter des règles de sécurité ou de log ici    
+    # Possibilité d'ajouter des règles de sécurité ou de log ici

@@ -29,3 +29,6 @@ def seed_admin():
     db.session.add(admin)
     db.session.commit()
     click.echo("👑 Admin ajouté.")
+
+if __name__ == "__main__":
+    cli()

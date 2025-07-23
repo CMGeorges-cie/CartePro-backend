@@ -60,3 +60,4 @@ jobs:
       #  run: |
       #    echo "Lancement des tests avec la clé Stripe..."
       #    pytest tests/test_stripe.py # Assure-toi que ce fichier existe et contient tes tests
+

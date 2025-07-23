@@ -56,3 +56,4 @@ def logout():
 @login_required
 def me():
     return jsonify({"id": current_user.id, "username": current_user.username})
+

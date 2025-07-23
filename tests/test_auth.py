@@ -129,3 +129,4 @@ def test_card_access_forbidden(client):
 
     rv = client.delete(f'/api/v1/cards/{card_id}')
     assert rv.status_code == 403
+

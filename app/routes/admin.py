@@ -36,3 +36,4 @@ def restore_backup(filename):
         return jsonify({'error': 'Backup file not found'}), 404
     # Logique de restauration à adapter
     return jsonify({'message': f'Backup {filename} restored (simulation).'})
+

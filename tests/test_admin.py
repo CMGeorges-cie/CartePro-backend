@@ -59,3 +59,4 @@ def test_admin_routes(client, admin_user):
     rv = client.get('/api/v1/admin/backups')
     assert rv.status_code == 200
     assert isinstance(rv.get_json(), list)
+

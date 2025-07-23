@@ -93,3 +93,4 @@ class Subscription(db.Model):
 
     def __repr__(self):
         return f'<Subscription {self.stripe_subscription_id} for User {self.user_id}>'
+

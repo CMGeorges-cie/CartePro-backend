@@ -132,3 +132,4 @@ Project is ready for deployment to [Render](https://render.com), Railway or any 
 ## 📚 License
 
 MIT License
+
