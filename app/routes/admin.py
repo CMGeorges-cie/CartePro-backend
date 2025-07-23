@@ -3,7 +3,7 @@ from app.models import User, Card
 from app.decorators import admin_required
 import os
 
-admin_bp = Blueprint('admin_api', __name__, n)
+admin_bp = Blueprint('admin_api', __name__)
 
 @admin_bp.route('/users', methods=['GET'])
 @admin_required
