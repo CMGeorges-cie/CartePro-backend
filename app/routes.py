@@ -51,7 +51,7 @@ def index():
 @main_routes.route('/generate', methods=['POST'])
 def generate_qr():
     data = request.json
-    url = data.get("website")
+    url = data.get("url") or data.get("website")
     if not url:
         return jsonify({"error": "Missing 'url or website' in request."}), 400
 
