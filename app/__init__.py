@@ -2,7 +2,6 @@
 from flask import Flask, render_template
 from flask_cors import CORS
 from .auth import auth_routes
-from .api import api_bp  # Toutes les routes API REST
 from .routes.cards import cards_bp
 from .routes.admin import admin_bp
 from .routes.stripe import stripe_bp
