@@ -10,15 +10,15 @@ auth_routes = Blueprint('auth', __name__)
 def register():
     data = request.json
     username = data.get("username")
-    email = data.get("email") # <- important pour l'unicité
+    email = data.get("email")
     password = data.get("password")
 
-    if not username or not password:
-        return jsonify({"error": "Username and password required."}), 400
+    if not username or not email or not password:
+        return jsonify({"error": "Username, email and password required."}), 400
 
     # Vérifie si l'utilisateur existe déjà dans la base de données
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "Username already exists."}), 400
+    if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+        return jsonify({"error": "User already exists."}), 400
 
     # Crée un nouvel utilisateur et hashe son mot de passe
     new_user = User(username=username, email=email)
