@@ -5,6 +5,9 @@ from .services import generate_qr_code_with_logo
 import stripe
 from .extensions import db
 from flask_login import login_required,current_user
+from .decorators import admin_required
+import os
+from flask_restx import Namespace, Resource
 # Assurez-vous d'avoir installé stripe avec `pip install stripe`
 
 
@@ -16,6 +19,7 @@ from flask_login import login_required,current_user
 # }
 
 main_routes = Blueprint('main', __name__)
+admin_ns = Namespace('admin', description='Routes admin')
 
 @main_routes.route('/create-checkout-session', methods=['POST'])
 # @login_required # <-- On protégera cette route plus tard
@@ -166,7 +170,9 @@ def stripe_webhook():
 def get_config():
     try:
         # On récupère tous les produits actifs depuis Stripe
-        #print("Stripe API KEY:", stripe.api_key)  # DEBUG
+        print("Stripe API KEY:", stripe.api_key)  # DEBUG
+        if not stripe.api_key:
+            return jsonify({"error": "Stripe API key not set"}), 500
         # L'argument 'expand' permet de récupérer le prix par défaut en une seule requête
         products = stripe.Product.list(active=True, expand=['data.default_price'])
         
@@ -188,3 +194,43 @@ def get_config():
     except Exception as e:
         print("Erreur Stripe:", e)
         return jsonify({"error": str(e)}), 500
+
+# Liste tous les utilisateurs
+@admin_ns.route('/users')
+class AdminUsers(Resource):
+    def get(self):
+        """Liste tous les utilisateurs (admin uniquement)"""
+        users = User.query.all()
+        return [{"id": u.id, "username": u.username, "role": u.role} for u in users]
+
+# Liste toutes les cartes créées
+@main_routes.route('/admin/cards', methods=['GET'])
+@admin_required
+def admin_cards():
+    cards = Card.query.all()
+    return jsonify([
+        {"id": c.id, "name": c.name, "email": c.email, "title": c.title, "user_id": c.user_id}
+        for c in cards
+    ])
+
+# Liste des fichiers de backup (.enc)
+@main_routes.route('/admin/backups', methods=['GET'])
+@admin_required
+def admin_backups():
+    backup_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backups')
+    files = []
+    if os.path.exists(backup_folder):
+        files = [f for f in os.listdir(backup_folder) if f.endswith('.enc')]
+    return jsonify({"backups": files})
+
+# Restaurer un backup .enc (optionnel)
+@main_routes.route('/admin/restore/<filename>', methods=['POST'])
+@admin_required
+def admin_restore(filename):
+    backup_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backups')
+    file_path = os.path.join(backup_folder, filename)
+    if not os.path.exists(file_path) or not filename.endswith('.enc'):
+        return jsonify({"error": "Backup file not found"}), 404
+    # Logique de restauration à adapter selon ton système
+    # Exemple : juste un message pour l'instant
+    return jsonify({"message": f"Backup {filename} restored (simulation)."})

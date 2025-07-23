@@ -27,9 +27,10 @@ class Card(db.Model):
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    # On ne stocke JAMAIS les mots de passe en clair
-    password_hash = db.Column(db.String(256), nullable=False)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    role = db.Column(db.String(20), default="user")  # Ajout du champ rôle
     stripe_customer_id = db.Column(db.String(120), unique=True, nullable=True)
     is_admin = db.Column(db.Boolean, default=False)  # Pour gérer les rôles d'utilisateur
     cards = db.relationship('Card', backref='user', lazy=True)

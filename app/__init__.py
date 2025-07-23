@@ -10,6 +10,11 @@ from .models import User
 from flask_sqlalchemy import SQLAlchemy
 from .extensions import db, login_manager
 import stripe
+from flask_restx import Api
+from dotenv import load_dotenv
+
+
+load_dotenv()  # Charger les variables d'environnement depuis .env
 
 
 
@@ -62,6 +67,17 @@ def create_app(config_class=Config):
     with app.app_context():
         db.create_all()
         # Optionnel : Créer un utilisateur admin par défaut
+
+
+    api = Api(app, doc='/docs', title="CartePro API", description="Documentation de l'API CartePro")
+    # ...enregistre tes namespaces ici...
+    from .api import api_namespace
+    api.add_namespace(api_namespace, path='/api/v1')
+    # Enregistrer les routes de l'API
+    from .api import routes as api_routes
+    for route in api_routes:
+        api.add_resource(route['resource'], route['path'], endpoint=route['endpoint'])
+
         
     return app
 
