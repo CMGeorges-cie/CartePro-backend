@@ -1,68 +1,85 @@
-# app/__init__.py
+#__init__.py
 from flask import Flask, render_template
 from flask_cors import CORS
-from .routes import main_routes
 from .auth import auth_routes
-from config import Config
-import os
+from .routes.cards import cards_bp
+from .routes.admin import admin_bp
+from .routes.stripe import stripe_bp
+from .routes.qr import qr_bp
+from .routes.public import public_bp
 from .admin import admin
 from .models import User
-from flask_sqlalchemy import SQLAlchemy
 from .extensions import db, login_manager
+import os
 import stripe
+from dotenv import load_dotenv
+from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
+
+load_dotenv()
 
 
+def create_app(config_class: type[Config] = Config) -> Flask:
+    """Application factory."""
 
-def create_app(config_class=Config):
-    # Chemin absolu vers templates
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-    app = Flask(__name__, instance_relative_config=True)
+    env = os.environ.get("FLASK_ENV")
+
+    # Détermination automatique de la configuration si celle par défaut est utilisée
+    if config_class is Config:
+        if env == "production":
+            config_class = ProductionConfig
+        elif env == "testing":
+            config_class = TestingConfig
+        else:
+            config_class = DevelopmentConfig
+
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+    app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
 
-    # Assurer que le dossier 'instance' existe
+    # Dossier instance
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
 
-    # Initialiser les extensions
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'app.db')
+    if not app.config.get('SQLALCHEMY_DATABASE_URI'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.secret_key = app.config['SECRET_KEY']  # Utiliser la clé secrète de la config
+    app.secret_key = app.config['SECRET_KEY']
     app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
-    
-    # Configurer Stripe
+
+    # Initialisation des extensions
     stripe.api_key = app.config['STRIPE_SECRET_KEY']
-
-
-    
     db.init_app(app)
     CORS(app)
-    admin.init_app(app) # Initialiser Flask-Admin
-    login_manager.init_app(app)  # Initialiser Flask-Login
-    login_manager.login_view = 'auth.login'  # Définir la vue de connexion
+    admin.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
 
-    # Enregistrer le blueprint
-    app.register_blueprint(main_routes, url_prefix='/api/v1')
-    app.register_blueprint(auth_routes, url_prefix='/auth')
+    # Blueprints
+    def register_routes(app):
+        app.register_blueprint(auth_routes, url_prefix='/auth')
+        app.register_blueprint(cards_bp, url_prefix='/api/v1/cards')
+        app.register_blueprint(qr_bp, url_prefix='/api/v1/qr')
+        app.register_blueprint(stripe_bp, url_prefix='/api/v1/stripe')
+        app.register_blueprint(admin_bp, url_prefix='/api/v1/admin')
+        app.register_blueprint(public_bp)  # index, /view/:id, etc.
 
+    register_routes(app)                                    # Routes API
+
+    # User loader
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-
-    #gestion erreurs
+    # Gestion des erreurs
     @app.errorhandler(404)
     def not_found_error(error):
-        # On retourne notre template personnalisé et le code 404
         return render_template('errors/404.html'), 404
 
-
-    # Créer les tables de la base de données si elles n'existent pas
+    # Création DB
     with app.app_context():
         db.create_all()
-        # Optionnel : Créer un utilisateur admin par défaut
-        
-    return app
 
-app = create_app()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+    return app
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  

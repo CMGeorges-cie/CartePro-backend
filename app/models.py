@@ -24,16 +24,56 @@ class Card(db.Model):
     plan_type = db.Column(db.String(20), default='none') # ex: 'one_time', 'pro_annual'
     is_active = db.Column(db.Boolean, default=True)
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "title": self.title,
+            "email": self.email,
+            "phone": self.phone,
+            "website": self.website,
+            "instagram": self.instagram,
+            "linkedin": self.linkedin,
+            "user_id": self.user_id,
+            "plan_type": self.plan_type,
+            "is_active": self.is_active,
+        }
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    # On ne stocke JAMAIS les mots de passe en clair
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), default="user")  # Ajout du champ rôle
     stripe_customer_id = db.Column(db.String(120), unique=True, nullable=True)
     is_admin = db.Column(db.Boolean, default=False)  # Pour gérer les rôles d'utilisateur
+    avatar_filename = db.Column(db.String(200), nullable=True)
     cards = db.relationship('Card', backref='user', lazy=True)
     subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+
+    @property
+    def is_pro(self) -> bool:
+        """Return True if the user has an active subscription."""
+        return any(sub.status == 'active' for sub in self.subscriptions)
+
+    @property
+    def subscription_status(self) -> str:
+        active = next((s for s in self.subscriptions if s.status == 'active'), None)
+        return active.status if active else 'none'
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "role": self.role,
+            "stripe_customer_id": self.stripe_customer_id,
+            "is_admin": self.is_admin,
+            "avatar_filename": self.avatar_filename,
+            "is_pro": self.is_pro,
+            "subscription_status": self.subscription_status,
+        }
 
     def set_password(self, password):
         """Crée un hash sécurisé du mot de passe."""
@@ -46,6 +86,19 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
     
+    def serialize(self):
+        """Serialize the user object to a dictionary."""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'role': self.role,
+            'is_admin': self.is_admin,
+            'avatar_filename': self.avatar_filename,
+            'is_pro': self.is_pro,
+            'subscription_status': self.subscription_status
+        }
+    
 class Subscription(db.Model):
     __tablename__ = 'subscriptions'
     id = db.Column(db.Integer, primary_key=True)
@@ -57,3 +110,4 @@ class Subscription(db.Model):
 
     def __repr__(self):
         return f'<Subscription {self.stripe_subscription_id} for User {self.user_id}>'
+
