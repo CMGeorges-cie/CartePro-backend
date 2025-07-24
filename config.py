@@ -2,7 +2,10 @@
 import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DEFAULT_DB_PATH = os.path.join(BASE_DIR, "app", "instance", "cards.db")
+# The instance folder is created by Flask when ``instance_relative_config`` is
+# enabled in ``create_app``. Place the default SQLite database inside this
+# folder so the path matches ``app.instance_path``.
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "instance", "cards.db")
 
 class Config:
     """Configuration de base de l'application."""
