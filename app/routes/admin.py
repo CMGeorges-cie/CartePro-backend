@@ -2,6 +2,7 @@
 from flask import Blueprint, jsonify, request
 from app.models import User, Card, db
 from app.decorators import admin_required
+from app.utils import paginate_query, paginate_list
 import os
 
 admin_bp = Blueprint('admin_api', __name__)
@@ -9,6 +10,7 @@ admin_bp = Blueprint('admin_api', __name__)
 @admin_bp.route('/users', methods=['GET'])
 @admin_required
 def list_users():
+    return jsonify(paginate_query(User.query))
     email = request.args.get('email')
     query = User.query
     if email:
@@ -19,17 +21,16 @@ def list_users():
 @admin_bp.route('/cards', methods=['GET'])
 @admin_required
 def list_all_cards():
-    cards = Card.query.all()
-    return jsonify([card.serialize() for card in cards])
+    return jsonify(paginate_query(Card.query))
 
 @admin_bp.route('/backups', methods=['GET'])
 @admin_required
 def list_backups():
     backup_dir = os.path.join(os.getcwd(), 'backups')
     if not os.path.exists(backup_dir):
-        return jsonify([])
+        return jsonify(paginate_list([]))
     backups = [f for f in os.listdir(backup_dir) if f.endswith('.enc')]
-    return jsonify(backups)
+    return jsonify(paginate_list(backups))
 
 @admin_bp.route('/restore/<filename>', methods=['POST'])
 @admin_required
