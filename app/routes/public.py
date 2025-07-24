@@ -15,3 +15,8 @@ def view_card(card_id):
     from app.models import Card
     card = Card.query.get_or_404(card_id)
     return render_template('view_card.html', card=card)
+
+
+@public_bp.route('/health')
+def health():
+    return {'status': 'ok'}

@@ -50,15 +50,21 @@ def test_admin_routes(client, admin_user):
     assert rv.status_code == 200
     assert "Login" in rv.get_json()["message"]
 
-    rv = client.get('/api/v1/admin/users')
+    rv = client.get('/api/v1/admin/users?page=1&per_page=1')
     assert rv.status_code == 200
-    assert isinstance(rv.get_json(), list)
+    data = rv.get_json()
+    assert "items" in data
+    assert isinstance(data["items"], list)
 
-    rv = client.get('/api/v1/admin/cards')
+    rv = client.get('/api/v1/admin/cards?page=1&per_page=1')
     assert rv.status_code == 200
-    assert isinstance(rv.get_json(), list)
+    data = rv.get_json()
+    assert "items" in data
+    assert isinstance(data["items"], list)
 
-    rv = client.get('/api/v1/admin/backups')
+    rv = client.get('/api/v1/admin/backups?page=1&per_page=1')
     assert rv.status_code == 200
-    assert isinstance(rv.get_json(), list)
+    data = rv.get_json()
+    assert "items" in data
+    assert isinstance(data["items"], list)
 

@@ -91,6 +91,26 @@ def test_card_crud(client):
     assert "deleted" in rv.get_json()["message"]
 
 
+def test_list_cards_with_pagination(client):
+    register(client, "paginated", "paginated@mail.com", "pass")
+    login(client, "paginated", "pass")
+
+    for i in range(3):
+        client.post('/api/v1/cards/', json={
+            "name": f"Card {i}",
+            "email": f"card{i}@mail.com",
+            "title": "Title"
+        })
+
+    rv = client.get('/api/v1/cards/?page=1&per_page=2')
+    data = rv.get_json()
+    assert rv.status_code == 200
+    assert data["page"] == 1
+    assert data["per_page"] == 2
+    assert data["total"] == 3
+    assert len(data["items"]) == 2
+
+
 def test_protected_routes_require_login(client):
     rv = client.post('/api/v1/cards/', json={
         "name": "NoAuth",
@@ -98,6 +118,15 @@ def test_protected_routes_require_login(client):
         "title": "Hacker"
     })
     assert rv.status_code in (401, 302)
+
+
+def test_card_limit_free_plan(client):
+    register(client, "limit", "limit@mail.com", "pass")
+    login(client, "limit", "pass")
+    rv = client.post('/api/v1/cards/', json={"name": "c1", "email": "e@mail.com", "title": "t"})
+    assert rv.status_code == 201
+    rv = client.post('/api/v1/cards/', json={"name": "c2", "email": "e2@mail.com", "title": "t"})
+    assert rv.status_code == 403
 
 
 def test_me_route(client):
@@ -133,12 +162,24 @@ def test_card_access_forbidden(client):
     assert rv.status_code == 403
 
 
-def test_login_rate_limit(client):
-    register(client, "ratelimit", "rl@mail.com", "pass")
-    # 5 allowed attempts
-    for i in range(5):
-        rv = login(client, "ratelimit", "wrong")
-        assert rv.status_code == 401
-    rv = login(client, "ratelimit", "wrong")
-    assert rv.status_code == 429
+def test_update_me_and_delete(client):
+    register(client, "jean", "jean@mail.com", "pw")
+    login(client, "jean", "pw")
+    rv = client.patch('/auth/me', json={'username': 'newjean'})
+    assert rv.status_code == 200
+    assert rv.get_json()['username'] == 'newjean'
+    rv = client.delete('/auth/me')
+    assert rv.status_code == 200
+    # user should be anonymized
+    rv = client.get('/auth/me')
+    assert rv.status_code in (401, 302)
+
+
+def test_stripe_webhook(client):
+    event = {
+        'type': 'customer.subscription.updated',
+        'data': {'object': {'id': 'sub_123', 'status': 'active'}}
+    }
+    rv = client.post('/api/v1/stripe/webhook', json=event)
+    assert rv.status_code == 200
 

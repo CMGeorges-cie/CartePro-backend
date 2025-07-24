@@ -86,6 +86,9 @@ STRIPE_API_KEY=your-stripe-secret
 - `POST /auth/login`
 - `POST /auth/logout`
 - `GET /auth/me`
+- `PATCH /auth/me` — Update profile
+- `DELETE /auth/me` — Delete account
+- `POST /auth/avatar` — Upload avatar
 
 ### 📇 Cards
 
@@ -97,6 +100,10 @@ STRIPE_API_KEY=your-stripe-secret
 ### 📎 QR Code
 
 - `POST /generate_qr` — Generate QR with logo
+
+### Misc
+
+- `GET /health` — Health check
 
 ### 💳 Stripe
 
