@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import pytest
 from app import create_app, db
 from app.models import User
+from app.extensions import limiter
 from werkzeug.security import generate_password_hash
 
 class TestConfig:
@@ -18,6 +19,7 @@ class TestConfig:
 @pytest.fixture
 def app_instance():
     app = create_app(TestConfig)
+    limiter.reset()
     with app.app_context():
         db.create_all()
         yield app

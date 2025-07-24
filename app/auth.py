@@ -5,6 +5,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 from .models import db, User
+from .extensions import limiter
 
 auth_routes = Blueprint('auth', __name__)
 
@@ -32,6 +33,7 @@ def register():
     return jsonify({"message": f"User '{username}' registered successfully."}), 201
 
 @auth_routes.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     data = request.json
     username = data.get("username")

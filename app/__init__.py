@@ -11,7 +11,7 @@ from .routes.qr import qr_bp
 from .routes.public import public_bp
 from .admin import admin
 from .models import User
-from .extensions import db, login_manager
+from .extensions import db, login_manager, limiter
 import os
 import stripe
 from dotenv import load_dotenv
@@ -60,6 +60,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     admin.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
+    limiter.init_app(app)
 
     # Blueprints
     def register_routes(app):
