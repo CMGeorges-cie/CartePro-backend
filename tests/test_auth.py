@@ -98,6 +98,15 @@ def test_protected_routes_require_login(client):
     assert rv.status_code in (401, 302)
 
 
+def test_card_limit_free_plan(client):
+    register(client, "limit", "limit@mail.com", "pass")
+    login(client, "limit", "pass")
+    rv = client.post('/api/v1/cards/', json={"name": "c1", "email": "e@mail.com", "title": "t"})
+    assert rv.status_code == 201
+    rv = client.post('/api/v1/cards/', json={"name": "c2", "email": "e2@mail.com", "title": "t"})
+    assert rv.status_code == 403
+
+
 def test_me_route(client):
     register(client, "bob", "bob@mail.com", "1234")
     login(client, "bob", "1234")
@@ -129,4 +138,26 @@ def test_card_access_forbidden(client):
 
     rv = client.delete(f'/api/v1/cards/{card_id}')
     assert rv.status_code == 403
+
+
+def test_update_me_and_delete(client):
+    register(client, "jean", "jean@mail.com", "pw")
+    login(client, "jean", "pw")
+    rv = client.patch('/auth/me', json={'username': 'newjean'})
+    assert rv.status_code == 200
+    assert rv.get_json()['username'] == 'newjean'
+    rv = client.delete('/auth/me')
+    assert rv.status_code == 200
+    # user should be anonymized
+    rv = client.get('/auth/me')
+    assert rv.status_code in (401, 302)
+
+
+def test_stripe_webhook(client):
+    event = {
+        'type': 'customer.subscription.updated',
+        'data': {'object': {'id': 'sub_123', 'status': 'active'}}
+    }
+    rv = client.post('/api/v1/stripe/webhook', json=event)
+    assert rv.status_code == 200
 

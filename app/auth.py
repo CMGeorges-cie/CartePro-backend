@@ -1,7 +1,9 @@
 # app/auth.py
 
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
+import os
 from .models import db, User
 
 auth_routes = Blueprint('auth', __name__)
@@ -55,5 +57,44 @@ def logout():
 @auth_routes.route('/me', methods=['GET'])
 @login_required
 def me():
-    return jsonify({"id": current_user.id, "username": current_user.username})
+    return jsonify(current_user.serialize())
+
+
+@auth_routes.route('/me', methods=['PATCH'])
+@login_required
+def update_me():
+    data = request.form or request.json or {}
+    current_user.username = data.get('username', current_user.username)
+    current_user.email = data.get('email', current_user.email)
+    db.session.commit()
+    return jsonify(current_user.serialize())
+
+
+@auth_routes.route('/avatar', methods=['POST'])
+@login_required
+def upload_avatar():
+    if 'avatar' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    file = request.files['avatar']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    filename = secure_filename(file.filename)
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+    path = os.path.join(upload_folder, filename)
+    file.save(path)
+    current_user.avatar_filename = filename
+    db.session.commit()
+    return jsonify({'message': 'Avatar uploaded', 'avatar': filename})
+
+
+@auth_routes.route('/me', methods=['DELETE'])
+@login_required
+def delete_me():
+    current_user.username = f'deleted-{current_user.id}'
+    current_user.email = f"deleted-{current_user.id}@example.com"
+    current_user.password_hash = ''
+    db.session.commit()
+    logout_user()
+    return jsonify({'message': 'Account deleted'})
 

@@ -48,8 +48,19 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), default="user")  # Ajout du champ rôle
     stripe_customer_id = db.Column(db.String(120), unique=True, nullable=True)
     is_admin = db.Column(db.Boolean, default=False)  # Pour gérer les rôles d'utilisateur
+    avatar_filename = db.Column(db.String(200), nullable=True)
     cards = db.relationship('Card', backref='user', lazy=True)
     subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+
+    @property
+    def is_pro(self) -> bool:
+        """Return True if the user has an active subscription."""
+        return any(sub.status == 'active' for sub in self.subscriptions)
+
+    @property
+    def subscription_status(self) -> str:
+        active = next((s for s in self.subscriptions if s.status == 'active'), None)
+        return active.status if active else 'none'
 
     def serialize(self):
         return {
@@ -59,6 +70,9 @@ class User(UserMixin, db.Model):
             "role": self.role,
             "stripe_customer_id": self.stripe_customer_id,
             "is_admin": self.is_admin,
+            "avatar_filename": self.avatar_filename,
+            "is_pro": self.is_pro,
+            "subscription_status": self.subscription_status,
         }
 
     def set_password(self, password):
@@ -79,7 +93,10 @@ class User(UserMixin, db.Model):
             'username': self.username,
             'email': self.email,
             'role': self.role,
-            'is_admin': self.is_admin
+            'is_admin': self.is_admin,
+            'avatar_filename': self.avatar_filename,
+            'is_pro': self.is_pro,
+            'subscription_status': self.subscription_status
         }
     
 class Subscription(db.Model):

@@ -8,6 +8,8 @@ cards_bp = Blueprint('cards', __name__)
 @login_required
 def create_card():
     data = request.json
+    if not current_user.is_pro and Card.query.filter_by(user_id=current_user.id).count() >= 1:
+        return jsonify({'error': 'Card limit reached'}), 403
     card = Card(
         user_id=current_user.id,
         name=data.get('name'),
