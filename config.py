@@ -1,10 +1,13 @@
 # config.py
 import os
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "app", "instance", "cards.db")
+
 class Config:
     """Configuration de base de l'application."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'une-cle-secrete-tres-difficile-a-deviner'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///instance/cards.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f"sqlite:///{DEFAULT_DB_PATH}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DEBUG = True if os.environ.get('FLASK_ENV') == 'development' else False
     
