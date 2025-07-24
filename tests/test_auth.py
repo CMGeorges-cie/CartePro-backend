@@ -89,6 +89,26 @@ def test_card_crud(client):
     assert "deleted" in rv.get_json()["message"]
 
 
+def test_list_cards_with_pagination(client):
+    register(client, "paginated", "paginated@mail.com", "pass")
+    login(client, "paginated", "pass")
+
+    for i in range(3):
+        client.post('/api/v1/cards/', json={
+            "name": f"Card {i}",
+            "email": f"card{i}@mail.com",
+            "title": "Title"
+        })
+
+    rv = client.get('/api/v1/cards/?page=1&per_page=2')
+    data = rv.get_json()
+    assert rv.status_code == 200
+    assert data["page"] == 1
+    assert data["per_page"] == 2
+    assert data["total"] == 3
+    assert len(data["items"]) == 2
+
+
 def test_protected_routes_require_login(client):
     rv = client.post('/api/v1/cards/', json={
         "name": "NoAuth",

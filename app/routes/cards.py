@@ -1,8 +1,15 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import Card, db
+from app.utils import paginate_query
 
 cards_bp = Blueprint('cards', __name__)
+
+@cards_bp.route('/', methods=['GET'])
+@login_required
+def list_cards():
+    query = Card.query.filter_by(user_id=current_user.id)
+    return jsonify(paginate_query(query))
 
 @cards_bp.route('/', methods=['POST'])
 @login_required
