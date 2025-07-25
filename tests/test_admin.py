@@ -72,8 +72,9 @@ def test_admin_routes(client, admin_user):
     rv = client.get('/api/v1/admin/users', query_string={'email': 'admin@mail.com'})
     assert rv.status_code == 200
     data = rv.get_json()
-    assert len(data) == 1
-    assert data[0]['email'] == 'admin@mail.com'
+    assert "items" in data
+    assert len(data["items"]) == 1
+    assert data["items"][0]['email'] == 'admin@mail.com'
 
     # Create and delete a card then restore it
     rv = client.post('/api/v1/cards/', json={

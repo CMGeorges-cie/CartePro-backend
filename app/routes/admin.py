@@ -10,13 +10,12 @@ admin_bp = Blueprint('admin_api', __name__)
 @admin_bp.route('/users', methods=['GET'])
 @admin_required
 def list_users():
-    return jsonify(paginate_query(User.query))
+    """List users with optional filtering by email and pagination."""
     email = request.args.get('email')
     query = User.query
     if email:
         query = query.filter_by(email=email)
-    users = query.all()
-    return jsonify([user.serialize() for user in users])
+    return jsonify(paginate_query(query))
 
 @admin_bp.route('/cards', methods=['GET'])
 @admin_required
