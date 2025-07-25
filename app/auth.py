@@ -94,6 +94,7 @@ def delete_me():
     current_user.username = f'deleted-{current_user.id}'
     current_user.email = f"deleted-{current_user.id}@example.com"
     current_user.password_hash = ''
+    current_user.is_deleted = True
     db.session.commit()
     logout_user()
     return jsonify({'message': 'Account deleted'})

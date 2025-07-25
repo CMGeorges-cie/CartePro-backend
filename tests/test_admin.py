@@ -66,3 +66,22 @@ def test_admin_routes(client, admin_user):
     assert "items" in data
     assert isinstance(data["items"], list)
 
+    # Search user by email
+    new_user = User(username="bob", email="bob@mail.com", password_hash=generate_password_hash("pwd"))
+    db.session.add(new_user)
+    db.session.commit()
+    rv = client.get('/api/v1/admin/users?email=bob@mail.com')
+    assert rv.status_code == 200
+    data = rv.get_json()
+    assert data["total"] >= 1
+    assert any(u["email"] == "bob@mail.com" for u in data["items"]) if data["items"] else False
+
+    # Restore deleted user
+    new_user.username = f"deleted-{new_user.id}"
+    new_user.email = f"deleted-{new_user.id}@example.com"
+    new_user.is_deleted = True
+    db.session.commit()
+    rv = client.post(f'/api/v1/admin/users/{new_user.id}/restore', json={"username": "bob2", "email": "bob2@mail.com"})
+    assert rv.status_code == 200
+    assert "restored" in rv.get_json()["message"]
+

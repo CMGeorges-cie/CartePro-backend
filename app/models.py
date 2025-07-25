@@ -51,6 +51,7 @@ class User(UserMixin, db.Model):
     avatar_filename = db.Column(db.String(200), nullable=True)
     cards = db.relationship('Card', backref='user', lazy=True)
     subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+    is_deleted = db.Column(db.Boolean, default=False)
 
     @property
     def is_pro(self) -> bool:
@@ -61,19 +62,6 @@ class User(UserMixin, db.Model):
     def subscription_status(self) -> str:
         active = next((s for s in self.subscriptions if s.status == 'active'), None)
         return active.status if active else 'none'
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "username": self.username,
-            "email": self.email,
-            "role": self.role,
-            "stripe_customer_id": self.stripe_customer_id,
-            "is_admin": self.is_admin,
-            "avatar_filename": self.avatar_filename,
-            "is_pro": self.is_pro,
-            "subscription_status": self.subscription_status,
-        }
 
     def set_password(self, password):
         """Crée un hash sécurisé du mot de passe."""
@@ -96,7 +84,9 @@ class User(UserMixin, db.Model):
             'is_admin': self.is_admin,
             'avatar_filename': self.avatar_filename,
             'is_pro': self.is_pro,
-            'subscription_status': self.subscription_status
+            'subscription_status': self.subscription_status,
+            'stripe_customer_id': self.stripe_customer_id,
+            'is_deleted': self.is_deleted
         }
     
 class Subscription(db.Model):
