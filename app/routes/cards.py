@@ -19,17 +19,27 @@ def create_card():
     ---
     tags:
       - Cards
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required: [name, email]
-            properties:
-              name: {type: string}
-              email: {type: string}
-              title: {type: string}
+     consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: payload
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+            - email
+          properties:
+            name:
+              type: string
+              example: "Alice Card"
+            email:
+              type: string
+              example: "alice@mail.com"
+            title:
+              type: string
+              example: "CTO"
     responses:
       201:
         description: Card created
