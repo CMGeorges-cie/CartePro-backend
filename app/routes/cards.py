@@ -14,6 +14,30 @@ def list_cards():
 @cards_bp.route('/', methods=['POST'])
 @login_required
 def create_card():
+    """
+    Create a business card
+    ---
+    tags:
+      - Cards
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name, email]
+            properties:
+              name: {type: string}
+              email: {type: string}
+              title: {type: string}
+    responses:
+      201:
+        description: Card created
+      401:
+        description: Unauthorized
+      403:
+        description: Plan limit reached or forbidden
+    """
     data = request.json
     if not current_user.is_pro and Card.query.filter_by(user_id=current_user.id).count() >= 1:
         return jsonify({'error': 'Card limit reached'}), 403

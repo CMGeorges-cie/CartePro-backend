@@ -17,6 +17,9 @@ import stripe
 from dotenv import load_dotenv
 from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
 from .health import health_bp
+from flask_smorest import Api
+from flasgger import Swagger
+
 
 
 load_dotenv()
@@ -40,6 +43,26 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
     app.register_blueprint(health_bp)
+    # Configuration Swagger / OpenAPI
+
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": "openapi",
+                "route": "/openapi.json",
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/docs",
+    }
+
+    Swagger(app, config=swagger_config)
+
+
 
     # Dossier instance
     try:
