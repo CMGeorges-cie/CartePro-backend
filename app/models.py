@@ -64,19 +64,6 @@ class User(UserMixin, db.Model):
         active = next((s for s in self.subscriptions if s.status == 'active'), None)
         return active.status if active else 'none'
 
-    def serialize(self):
-        return {
-            "id": self.id,
-            "username": self.username,
-            "email": self.email,
-            "role": self.role,
-            "stripe_customer_id": self.stripe_customer_id,
-            "is_admin": self.is_admin,
-            "avatar_filename": self.avatar_filename,
-            "is_pro": self.is_pro,
-            "subscription_status": self.subscription_status,
-        }
-
     def set_password(self, password):
         """Crée un hash sécurisé du mot de passe."""
         self.password_hash = generate_password_hash(password)
@@ -95,6 +82,7 @@ class User(UserMixin, db.Model):
             'username': self.username,
             'email': self.email,
             'role': self.role,
+            'stripe_customer_id': self.stripe_customer_id,
             'is_admin': self.is_admin,
             'avatar_filename': self.avatar_filename,
             'is_pro': self.is_pro,
@@ -112,4 +100,3 @@ class Subscription(db.Model):
 
     def __repr__(self):
         return f'<Subscription {self.stripe_subscription_id} for User {self.user_id}>'
-

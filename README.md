@@ -1,148 +1,124 @@
-# 📇 CartePro Backend
+# CartePro Backend
 
-**CartePro** is a secure, modular backend built with Flask for managing digital business cards, QR code generation, user authentication, and premium membership via Stripe.
+A Flask-based backend that powers CartePro digital business cards. It provides user authentication, card CRUD, QR generation, Stripe integration, and admin operations.
 
----
+## Table of Contents
+- [Features](#features)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [API Summary](#api-summary)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Deployment](#deployment)
+- [License](#license)
 
-## 🚀 Features
+## Features
+- Authentication: register, login, logout, profile management.
+- Card management: CRUD with per-user ownership.
+- QR code generation.
+- Stripe configuration + webhook handling.
+- Admin endpoints for users, cards, and backups.
+- Rate limiting on login.
 
-- 🔐 **Authentication**: Register, login, logout, and `/auth/me` to get the connected user
-- 📇 **Card Management**: Full CRUD for professional cards linked to users (`/api/v1/cards`)
-- � QR Code Generator: Generate branded QR codes with logo overlays
-- 💳 **Stripe Integration**: Subscription handling via `/api/v1/config`, secured with environment variables
-- ⚙️ **Admin Panel**: View users, cards, backups, and perform admin actions (with role protection)
-- 🛠️ **Error Handling**: Custom JSON and template-based error responses (404, 500)
-- ✅ **Testing**: Pytest suite covering auth, CRUD, Stripe, and protected routes
-- 🔁 **CI/CD**: GitHub Actions workflow for linting, testing, and deployment
+## Architecture
+- **Flask Blueprints**: `auth`, `cards`, `admin`, `stripe`, `qr`, `public`.
+- **SQLAlchemy models**: `User`, `Card`, `Subscription`.
+- **Utilities**: pagination helpers and QR code service.
+- **Extensions**: database, login manager, rate limiter.
 
----
-
-## 📁 Project Structure
-
+## Project Structure
 ```
-backend/
-├── app/
-│   ├── __init__.py          # App factory, blueprints, extensions
-│   ├── models.py            # User and Card models (SQLAlchemy)
-│   ├── routes.py            # API routes (cards, QR, Stripe, admin)
-│   ├── auth.py              # Auth routes
-│   ├── services.py          # Utilities (QR generation, etc.)
-│   ├── extensions.py        # Extensions (db, login_manager)
-│   ├── admin.py             # Admin config (Flask-Admin)
-│   ├── templates/errors/    # Error pages (404.html, etc.)
-│   └── static/logo.png      # Logo for QR codes
-│
-├── instance/app.db         # SQLite DB
-├── tests/                  # Pytest test suite
-│   ├── test_api.py
-│   ├── test_auth.py
-│   └── test_stripe.py
-│
-├── .env                    # Environment config (not tracked)
-├── requirements.txt        # Python dependencies
-├── run.py                  # App entry point
-└── .github/workflows/      # GitHub Actions CI
+app/
+  __init__.py          # App factory + blueprint registration
+  auth.py              # Auth routes
+  models.py            # SQLAlchemy models
+  services.py          # QR service
+  utils.py             # Pagination helpers
+  extensions.py        # db, login_manager, limiter
+  routes/
+    admin.py
+    cards.py
+    qr.py
+    stripe.py
+    public.py
+  templates/
+    index.html
+    card_templates.html
+config.py              # Environment configuration
+run.py                 # Local run entry point
+wsgi.py                # WSGI entry point
 ```
 
----
-
-## 🛠️ Setup
-
+## Getting Started
 ```bash
-# Clone the repo
-git clone https://github.com/yourname/cartepro-backend
-cd cartepro-backend
-
-# Create a virtual environment
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-
-# Install dependencies
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# Set environment variables
-cp .env.example .env  # Then edit .env with your keys
-
-# Run the app
 python run.py
 ```
 
----
-
-## 🔑 .env Configuration (example)
-
+## Configuration
+Environment variables (typical for production):
 ```
-SECRET_KEY=your-secret-key
-STRIPE_API_KEY=your-stripe-secret
+SECRET_KEY=...
+DATABASE_URL=...
+STRIPE_SECRET_KEY=...
+STRIPE_PUBLIC_KEY=...
+STRIPE_WEBHOOK_SECRET=...
 ```
 
----
-
-## ✅ API Endpoints Summary
-
-### 🔐 Auth
-
+## API Summary
+### Auth (`/auth`)
 - `POST /auth/register`
 - `POST /auth/login`
 - `POST /auth/logout`
 - `GET /auth/me`
-- `PATCH /auth/me` — Update profile
-- `DELETE /auth/me` — Delete account
-- `POST /auth/avatar` — Upload avatar
+- `PATCH /auth/me`
+- `DELETE /auth/me`
+- `POST /auth/avatar`
 
-### 📇 Cards
+### Cards (`/api/v1/cards`)
+- `GET /api/v1/cards/`
+- `POST /api/v1/cards/`
+- `GET /api/v1/cards/<card_id>`
+- `PUT /api/v1/cards/<card_id>`
+- `DELETE /api/v1/cards/<card_id>`
 
-- `POST /api/v1/cards` — Create
-- `GET /api/v1/cards/<id>` — Read
-- `PUT /api/v1/cards/<id>` — Update
-- `DELETE /api/v1/cards/<id>` — Delete
+### QR (`/api/v1/qr`)
+- `POST /api/v1/qr/generate`
 
-### 📎 QR Code
+### Stripe (`/api/v1/stripe`)
+- `GET /api/v1/stripe/config`
+- `POST /api/v1/stripe/webhook`
 
-- `POST /generate_qr` — Generate QR with logo
+### Admin (`/api/v1/admin`)
+- `GET /api/v1/admin/users`
+- `GET /api/v1/admin/cards`
+- `GET /api/v1/admin/backups`
+- `POST /api/v1/admin/restore/<filename>`
+- `POST /api/v1/admin/restore_card/<card_id>`
+- `GET /api/v1/admin/export?model=users|cards&format=json|csv`
 
-### Misc
+### Public
+- `GET /`
+- `GET /view/<card_id>`
+- `GET /health`
 
-- `GET /health` — Health check
-
-### 💳 Stripe
-
-- `GET /api/v1/config` — Retrieve Stripe plan info
-
-### ⚙️ Admin (admin role only)
-
-- `GET /admin/users` — List users
-- `GET /admin/cards` — List all cards
-- `GET /admin/backups` — List encrypted backups
-
----
-
-## 🧪 Testing
-
+## Testing
 ```bash
-pytest tests/
+pytest -q
 ```
 
-All tests are written using Pytest and cover auth, API CRUD, Stripe config, and protected routes.
+## Documentation
+- English: `docs/ENGINEERING_DOCUMENTATION.en.md`
+- Français: `docs/ENGINEERING_DOCUMENTATION.fr.md`
+- Engineering review: `docs/ENGINEERING_REVIEW.en.md` / `docs/ENGINEERING_REVIEW.fr.md`
 
----
+## Deployment
+- Use a WSGI server with `wsgi.py` (e.g., Gunicorn).
+- Docker is supported via `Dockerfile` and `docker-compose.yml`.
 
-## 🚀 Deployment
-
-Project is ready for deployment to [Render](https://render.com), Railway or any other platform.
-
-- Port is automatically bound from `os.environ["PORT"]`
-- CI workflow handles testing and lint before deploy
-
-You can also run the project locally with Docker:
-
-```bash
-docker-compose up --build
-```
-
----
-
-## 📚 License
-
-MIT License
-
+## License
+MIT
