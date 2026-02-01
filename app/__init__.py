@@ -42,7 +42,6 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
     app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
-    app.register_blueprint(health_bp)
 
 
 
@@ -101,16 +100,24 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     with app.app_context():
         db.create_all()
 
-
-    # Register blueprints (IMPORTANT: before Swagger)
-    app.register_blueprint(auth_routes)
-    app.register_blueprint(cards_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(stripe_bp)
-    app.register_blueprint(health_bp)
-
+    # API documentation
     # Swagger docs
-    Swagger(app, config={"specs_route": "/docs"})
+    swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec_1",
+            "route": "/apispec_1.json",
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "swagger_ui": True,
+    "specs_route": "/docs",
+    }
+
+    Swagger(app, config=swagger_config)
+
 
     return app
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
