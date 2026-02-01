@@ -43,24 +43,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
     app.register_blueprint(health_bp)
-    # Configuration Swagger / OpenAPI
 
-    swagger_config = {
-        "headers": [],
-        "specs": [
-            {
-                "endpoint": "openapi",
-                "route": "/openapi.json",
-                "rule_filter": lambda rule: True,
-                "model_filter": lambda tag: True,
-            }
-        ],
-        "static_url_path": "/flasgger_static",
-        "swagger_ui": True,
-        "specs_route": "/docs",
-    }
-
-    Swagger(app, config=swagger_config)
 
 
 
@@ -117,6 +100,17 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     # Création DB
     with app.app_context():
         db.create_all()
+
+
+    # Register blueprints (IMPORTANT: before Swagger)
+    app.register_blueprint(auth_routes)
+    app.register_blueprint(cards_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(stripe_bp)
+    app.register_blueprint(health_bp)
+
+    # Swagger docs
+    Swagger(app, config={"specs_route": "/docs"})
 
     return app
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
