@@ -5,9 +5,9 @@ name: Python Flask CI/CD
 on:
   # Déclenche le workflow sur les push et pull requests vers la branche principale
   push:
-    branches: [dev] # ou [ master ] si tu utilises toujours l'ancien nom
+    branches: [dev] # ou [ main ] si tu utilises toujours l'ancien nom
   pull_request:
-    branches: [master, dev] # ou [ master ]
+    branches: [main, dev]
 
 jobs:
   build-and-test:
@@ -49,7 +49,7 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: |
           echo "Tests unitaires à venir avec Pytest..."
-          pytest tests/
+          pytest -q
 
       #- name: Exécuter des tests (avec la clé API)
       # C'est ici la magie ! On injecte le secret GitHub
@@ -60,4 +60,3 @@ jobs:
       #  run: |
       #    echo "Lancement des tests avec la clé Stripe..."
       #    pytest tests/test_stripe.py # Assure-toi que ce fichier existe et contient tes tests
-

@@ -16,6 +16,8 @@ import os
 import stripe
 from dotenv import load_dotenv
 from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
+from .health import health_bp
+
 
 load_dotenv()
 
@@ -37,6 +39,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
     app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
+    app.register_blueprint(health_bp)
 
     # Dossier instance
     try:
