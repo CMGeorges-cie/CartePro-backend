@@ -68,6 +68,24 @@ def create_card():
 @cards_bp.route('/<string:card_id>', methods=['GET'])
 @login_required
 def get_card(card_id):
+    '''
+    Get a business card
+    ---
+    tags:
+      - Cards
+    parameters:
+      - in: path
+        name: card_id
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Card retrieved
+      403:
+        description: Deleted or unauthorized
+    '''
+
     card = Card.query.get_or_404(card_id)
     if card.is_deleted:
         return jsonify({'error': 'Deleted'}), 403
@@ -78,6 +96,14 @@ def get_card(card_id):
 @cards_bp.route('/<string:card_id>', methods=['PUT'])
 @login_required
 def update_card(card_id):
+    """{% load _summary__tags %}
+
+    Args:
+        card_id (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     card = Card.query.get_or_404(card_id)
     if card.is_deleted:
         return jsonify({'error': 'Deleted'}), 403
@@ -97,6 +123,14 @@ def update_card(card_id):
 @cards_bp.route('/<string:card_id>', methods=['DELETE'])
 @login_required
 def delete_card(card_id):
+    """_summary_
+
+    Args:
+        card_id (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     card = Card.query.get_or_404(card_id)
     if card.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
