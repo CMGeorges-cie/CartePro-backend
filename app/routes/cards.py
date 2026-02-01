@@ -96,13 +96,38 @@ def get_card(card_id):
 @cards_bp.route('/<string:card_id>', methods=['PUT'])
 @login_required
 def update_card(card_id):
-    """{% load _summary__tags %}
-
-    Args:
-        card_id (_type_): _description_
-
-    Returns:
-        _type_: _description_
+    """ Update a business card
+    ---
+    tags:
+      - Cards
+    parameters:
+        - in: path
+            name: card_id
+            required: true
+            schema:
+            type: string
+        - in: body
+            name: payload
+            required: true
+            schema:
+            type: object
+            properties:
+                name:
+                type: string
+                example: "Alice Card"
+                email:
+                type: string
+                example: "alice@mail.com"
+                title:
+                type: string
+                example: "CTO"
+    responses:
+      200:
+        description: Card updated
+    403:
+        description: Unauthorized or deleted card
+    404:
+        description: Card not found
     """
     card = Card.query.get_or_404(card_id)
     if card.is_deleted:
@@ -123,13 +148,25 @@ def update_card(card_id):
 @cards_bp.route('/<string:card_id>', methods=['DELETE'])
 @login_required
 def delete_card(card_id):
-    """_summary_
-
-    Args:
-        card_id (_type_): _description_
-
-    Returns:
-        _type_: _description_
+    """
+    Delete a business card
+    ---
+    tags:
+      - Cards
+    parameters:
+        - in: path
+            name: card_id
+            required: true
+            schema:
+            type: string
+    responses:
+      200:
+        description: Card deleted
+    403:
+        description: Unauthorized
+    404:
+        description: Card not found 
+           
     """
     card = Card.query.get_or_404(card_id)
     if card.user_id != current_user.id:
