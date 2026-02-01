@@ -81,6 +81,25 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     register_routes(app)                                    # Routes API
 
+
+   # API documentation
+    # Swagger docs
+    swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec_1",
+            "route": "/",
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "swagger_ui": True,
+    "specs_route": "/docs",
+    }
+
+    Swagger(app, config=swagger_config)
+
     # User loader
     @login_manager.user_loader
     def load_user(user_id):
@@ -100,23 +119,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     with app.app_context():
         db.create_all()
 
-    # API documentation
-    # Swagger docs
-    swagger_config = {
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": "apispec_1",
-            "route": "/apispec_1.json",
-            "rule_filter": lambda rule: True,
-            "model_filter": lambda tag: True,
-        }
-    ],
-    "swagger_ui": True,
-    "specs_route": "/docs",
-    }
-
-    Swagger(app, config=swagger_config)
+ 
 
 
     return app
