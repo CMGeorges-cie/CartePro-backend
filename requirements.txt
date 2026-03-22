@@ -29,7 +29,7 @@ itsdangerous==2.2.0
 Jinja2==3.1.6
 jsonschema==4.25.0
 jsonschema-specifications==2025.4.1
-limits==5.6.0
+limits==5.8.0
 loguru==0.7.3
 MarkupSafe==3.0.2
 marshmallow==4.2.1
