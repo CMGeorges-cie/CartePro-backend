@@ -1,5 +1,5 @@
 #__init__.py
-from flask import Flask, render_template
+from flask import Flask
 from flask_wtf import CSRFProtect
 from loguru import logger
 from flask_cors import CORS
@@ -10,21 +10,18 @@ from .routes.stripe import stripe_bp
 from .routes.qr import qr_bp
 from .routes.public import public_bp
 from .admin import admin
+from .errors import register_error_handlers
 from .models import User
 from .extensions import db, login_manager, limiter
 import os
 import stripe
 from dotenv import load_dotenv
 from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
-from .health import health_bp
-from flask_smorest import Api
 from flasgger import Swagger
 
 
 
 load_dotenv()
-
-
 def create_app(config_class: type[Config] = Config) -> Flask:
     """Application factory."""
 
@@ -43,14 +40,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
 
-
-
-
     # Dossier instance
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+    os.makedirs(app.instance_path, exist_ok=True)
 
     if not app.config.get('SQLALCHEMY_DATABASE_URI'):
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'app.db')
@@ -60,14 +51,24 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     log_file = os.path.join(app.instance_path, 'app.log')
     logger.add(log_file)
 
+    if app.config.get("ENV_NAME") == "production" and not app.config.get("SECRET_KEY"):
+        raise RuntimeError("SECRET_KEY must be configured in production.")
+
     # Initialisation des extensions
     stripe.api_key = app.config['STRIPE_SECRET_KEY']
     db.init_app(app)
     CSRFProtect(app)
-    CORS(app)
+    CORS(
+        app,
+        resources={
+            r"/api/*": {"origins": app.config.get("CORS_ORIGINS", "*")},
+            r"/auth/*": {"origins": app.config.get("CORS_ORIGINS", "*")},
+        },
+    )
     admin.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
+    limiter.storage_uri = app.config.get("RATELIMIT_STORAGE_URI", "memory://")
     limiter.init_app(app)
 
     # Blueprints
@@ -82,6 +83,18 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     register_routes(app)                                    # Routes API
 
 
+ 
+    # User loader
+    @login_manager.user_loader
+    def load_user(user_id):
+        return db.session.get(User, int(user_id))
+
+    register_error_handlers(app)
+
+    # Création DB
+    with app.app_context():
+        db.create_all()
+
    # API documentation
     # Swagger docs
     swagger_config = {
@@ -89,7 +102,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     "specs": [
         {
             "endpoint": "apispec_1",
-            "route": "/",
+            "route": "/apispec_1.json", 
             "rule_filter": lambda rule: True,
             "model_filter": lambda tag: True,
         }
@@ -99,27 +112,6 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     }
 
     Swagger(app, config=swagger_config)
-
-    # User loader
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
-
-    # Gestion des erreurs
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return render_template('errors/404.html'), 404
-
-    @app.errorhandler(500)
-    def internal_error(error):
-        logger.exception("Server error: %s", error)
-        return render_template('errors/500.html'), 500
-
-    # Création DB
-    with app.app_context():
-        db.create_all()
-
- 
 
 
     return app

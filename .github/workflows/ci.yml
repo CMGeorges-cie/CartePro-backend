@@ -1,62 +1,46 @@
-# .github/workflows/ci.yml
-
-name: Python Flask CI/CD
+name: quality-security
 
 on:
-  # Déclenche le workflow sur les push et pull requests vers la branche principale
   push:
-    branches: [dev, main] # ou [ main ] si tu utilises toujours l'ancien nom
+    branches: [main, dev]
   pull_request:
     branches: [main, dev]
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-test:
+  quality-security:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout du code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configuration de Python 3.10
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
+          cache: "pip"
 
-      - name: Installation des dépendances
+      - name: Install dependencies and security tooling
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest requests
+          pip install flake8 bandit pip-audit
 
-      - name: Linter avec Flake8
-        run: |
-          # Installe Flake8 (si pas dans requirements.txt) et vérifie le code
-          pip install flake8
-          # Stoppe le build s'il y a des erreurs de style ou de syntaxe.
-          # --count --select=E9,F63,F7,F82 --show-source --statistics
-          # --exit-zero ne bloque pas pour les erreurs de style, juste les erreurs graves.
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Lint
+        run: flake8 app tests --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      - name: Lancer le serveur Flask en arrière-plan
+      - name: Static security scan
+        run: bandit -r app -x tests
+
+      - name: Dependency vulnerability audit
+        run: pip-audit -r requirements.txt
+
+      - name: Run tests
         env:
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-        run: |
-          python run.py &
-          sleep 5
-
-      - name: Exécuter des tests unitaires (placeholder)
-        env:
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-        run: |
-          echo "Tests unitaires à venir avec Pytest..."
-          pytest -q
-
-      #- name: Exécuter des tests (avec la clé API)
-      # C'est ici la magie ! On injecte le secret GitHub
-      # dans une variable d'environnement pour le script de test.
-      #  env:
-      #    STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-
-      #  run: |
-      #    echo "Lancement des tests avec la clé Stripe..."
-      #    pytest tests/test_stripe.py # Assure-toi que ce fichier existe et contient tes tests
+          SECRET_KEY: ci-secret-key
+          STRIPE_SECRET_KEY: sk_test_ci
+          STRIPE_PUBLIC_KEY: pk_test_ci
+        run: pytest -q

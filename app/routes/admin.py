@@ -1,7 +1,8 @@
 # routes/admin.py
 from flask import Blueprint, jsonify, request
-from app.models import User, Card, db
+from app.models import User, Card
 from app.decorators import admin_required
+from app.errors import commit_session, get_or_404
 from app.utils import paginate_query, paginate_list
 import os
 
@@ -48,9 +49,9 @@ def restore_backup(filename):
 @admin_bp.route('/restore_card/<string:card_id>', methods=['POST'])
 @admin_required
 def restore_card(card_id):
-    card = Card.query.get_or_404(card_id)
+    card = get_or_404(Card, card_id)
     card.is_deleted = False
-    db.session.commit()
+    commit_session("Unable to restore card.")
     return jsonify({'message': 'Card restored'})
 
 

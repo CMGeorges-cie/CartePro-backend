@@ -17,10 +17,12 @@ services:
       - "5000:5000"
     environment:
       DATABASE_URL: postgresql://cartepro:cartepro@db/cartepro
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
     volumes:
       - backups:/app/backups
     depends_on:
       - db
+      - redis
 volumes:
   db_data:
   backups:

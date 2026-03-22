@@ -9,7 +9,7 @@ class MyAdminIndexView(AdminIndexView):
     def is_accessible(self):
         user_id = session.get('user_id')
         if user_id:
-            user = User.query.get(user_id)
+            user = db.session.get(User, user_id)
             return user and user.is_admin
         return False
 

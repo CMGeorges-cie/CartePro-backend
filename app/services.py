@@ -3,6 +3,7 @@ import qrcode
 from PIL import Image
 import io
 import os
+from loguru import logger
 
 DEFAULT_LOGO = 'app/static/logo.png'
 
@@ -27,6 +28,6 @@ def generate_qr_code_with_logo(url: str, logo_path: str = DEFAULT_LOGO) -> io.By
         img.save(buf, format='PNG')
         buf.seek(0)
         return buf
-    except Exception as e:
-        print(f"Error generating QR code: {e}")
+    except Exception:
+        logger.exception("Error generating QR code")
         return None

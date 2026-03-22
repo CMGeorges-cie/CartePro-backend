@@ -1,8 +1,6 @@
 from flask import Blueprint, render_template
-from .cards import cards_bp
-from .admin import admin_bp
-from .stripe import stripe_bp
-from .qr import qr_bp
+from app.errors import get_or_404
+from app.models import Card
 
 public_bp = Blueprint('main', __name__)
 
@@ -12,8 +10,7 @@ def index():
 
 @public_bp.route('/view/<int:card_id>')
 def view_card(card_id):
-    from app.models import Card
-    card = Card.query.get_or_404(card_id)
+    card = get_or_404(Card, card_id)
     return render_template('view_card.html', card=card)
 
 

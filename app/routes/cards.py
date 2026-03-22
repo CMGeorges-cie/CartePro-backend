@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import Card, db
+from app.errors import APIError, commit_session, get_or_404
 from app.utils import paginate_query
 
 cards_bp = Blueprint('cards', __name__)
@@ -15,42 +16,46 @@ def list_cards():
 @login_required
 def create_card():
     """
-    Create a business card
-    ---
-    tags:
-      - Cards
-     consumes:
-      - application/json
+    Create Business Card
+
+    -tags:
+        - Cards
     parameters:
-      - in: body
-        name: payload
-        required: true
-        schema:
-          type: object
-          required:
-            - name
-            - email
-          properties:
-            name:
-              type: string
-              example: "Alice Card"
-            email:
-              type: string
-              example: "alice@mail.com"
-            title:
-              type: string
-              example: "CTO"
+        - in: body 
+            name: card
+            description: Card details
+            schema:
+                type: object
+                properties:
+                name:
+                    type: string
+                email:
+                    type: string
+                title:
+                    type: string
+                phone:
+                    type: string
+                website:
+                    type: string
+                instagram:
+                    type: string
+                linkedin:
+                    type: string
     responses:
-      201:
-        description: Card created
-      401:
-        description: Unauthorized
-      403:
-        description: Plan limit reached or forbidden
+        201:
+            description: Card created
+        403:
+            description: Card limit reached (for non-pro users)
+    security:
+        - bearerAuth: []
+         
     """
-    data = request.json
+
+    data = request.get_json(silent=True) or {}
     if not current_user.is_pro and Card.query.filter_by(user_id=current_user.id).count() >= 1:
         return jsonify({'error': 'Card limit reached'}), 403
+    if not data.get('name') or not data.get('email') or not data.get('title'):
+        raise APIError("Name, email and title are required.", 400)
     card = Card(
         user_id=current_user.id,
         name=data.get('name'),
@@ -62,31 +67,14 @@ def create_card():
         linkedin=data.get('linkedin')
     )
     db.session.add(card)
-    db.session.commit()
+    commit_session("Unable to create card.")
     return jsonify({'message': 'Card created', 'id': card.id}), 201
 
 @cards_bp.route('/<string:card_id>', methods=['GET'])
 @login_required
 def get_card(card_id):
-    '''
-    Get a business card
-    ---
-    tags:
-      - Cards
-    parameters:
-      - in: path
-        name: card_id
-        required: true
-        schema:
-          type: string
-    responses:
-      200:
-        description: Card retrieved
-      403:
-        description: Deleted or unauthorized
-    '''
-
-    card = Card.query.get_or_404(card_id)
+   
+    card = get_or_404(Card, card_id)
     if card.is_deleted:
         return jsonify({'error': 'Deleted'}), 403
     if card.user_id != current_user.id:
@@ -96,45 +84,13 @@ def get_card(card_id):
 @cards_bp.route('/<string:card_id>', methods=['PUT'])
 @login_required
 def update_card(card_id):
-    """ Update a business card
-    ---
-    tags:
-      - Cards
-    parameters:
-        - in: path
-            name: card_id
-            required: true
-            schema:
-            type: string
-        - in: body
-            name: payload
-            required: true
-            schema:
-            type: object
-            properties:
-                name:
-                type: string
-                example: "Alice Card"
-                email:
-                type: string
-                example: "alice@mail.com"
-                title:
-                type: string
-                example: "CTO"
-    responses:
-      200:
-        description: Card updated
-    403:
-        description: Unauthorized or deleted card
-    404:
-        description: Card not found
-    """
-    card = Card.query.get_or_404(card_id)
+    
+    card = get_or_404(Card, card_id)
     if card.is_deleted:
         return jsonify({'error': 'Deleted'}), 403
     if card.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
-    data = request.json
+    data = request.get_json(silent=True) or {}
     card.name = data.get('name', card.name)
     card.email = data.get('email', card.email)
     card.title = data.get('title', card.title)
@@ -142,36 +98,17 @@ def update_card(card_id):
     card.website = data.get('website', card.website)
     card.instagram = data.get('instagram', card.instagram)
     card.linkedin = data.get('linkedin', card.linkedin)
-    db.session.commit()
+    commit_session("Unable to update card.")
     return jsonify({'message': 'Card updated'})
 
 @cards_bp.route('/<string:card_id>', methods=['DELETE'])
 @login_required
 def delete_card(card_id):
-    """
-    Delete a business card
-    ---
-    tags:
-      - Cards
-    parameters:
-        - in: path
-            name: card_id
-            required: true
-            schema:
-            type: string
-    responses:
-      200:
-        description: Card deleted
-    403:
-        description: Unauthorized
-    404:
-        description: Card not found 
-           
-    """
-    card = Card.query.get_or_404(card_id)
+   
+    card = get_or_404(Card, card_id)
     if card.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
     card.is_deleted = True
-    db.session.commit()
+    commit_session("Unable to delete card.")
     return jsonify({'message': 'Card deleted'})
 

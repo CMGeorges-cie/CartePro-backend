@@ -1,17 +1,18 @@
 # app/auth.py
 
-from flask import Blueprint, request, jsonify, session, current_app
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 from .models import db, User
 from .extensions import limiter
+from .errors import commit_session
 
 auth_routes = Blueprint('auth', __name__)
 
 @auth_routes.route('/register', methods=['POST'])
 def register():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     email = data.get("email")
     password = data.get("password")
@@ -28,14 +29,14 @@ def register():
     new_user.set_password(password)
     
     db.session.add(new_user)
-    db.session.commit()
+    commit_session("User already exists.")
 
     return jsonify({"message": f"User '{username}' registered successfully."}), 201
 
 @auth_routes.route('/login', methods=['POST'])
 @limiter.limit("5 per minute")
 def login():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     password = data.get("password")
 
@@ -65,10 +66,10 @@ def me():
 @auth_routes.route('/me', methods=['PATCH'])
 @login_required
 def update_me():
-    data = request.form or request.json or {}
+    data = request.form or request.get_json(silent=True) or {}
     current_user.username = data.get('username', current_user.username)
     current_user.email = data.get('email', current_user.email)
-    db.session.commit()
+    commit_session("Unable to update profile.")
     return jsonify(current_user.serialize())
 
 
@@ -86,7 +87,7 @@ def upload_avatar():
     path = os.path.join(upload_folder, filename)
     file.save(path)
     current_user.avatar_filename = filename
-    db.session.commit()
+    commit_session("Unable to save avatar.")
     return jsonify({'message': 'Avatar uploaded', 'avatar': filename})
 
 
@@ -95,8 +96,8 @@ def upload_avatar():
 def delete_me():
     current_user.username = f'deleted-{current_user.id}'
     current_user.email = f"deleted-{current_user.id}@example.com"
-    current_user.password_hash = ''
-    db.session.commit()
+    current_user.set_password(os.urandom(32).hex())
+    commit_session("Unable to delete account.")
     logout_user()
     return jsonify({'message': 'Account deleted'})
 
