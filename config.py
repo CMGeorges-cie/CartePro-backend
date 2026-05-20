@@ -20,7 +20,16 @@ class Config:
     #Stripe settings
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
     STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY')
-    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET') # Fais de même pour le secret du webhook !
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    STRIPE_MONTHLY_PRICE_ID = os.environ.get('STRIPE_MONTHLY_PRICE_ID')   # price_xxx depuis Stripe Dashboard
+    STRIPE_ANNUAL_PRICE_ID = os.environ.get('STRIPE_ANNUAL_PRICE_ID')     # price_xxx depuis Stripe Dashboard
+
+    # Email (SendGrid)
+    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+    FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@cartepro.ca')
+
+    # URL du frontend (pour les redirections Stripe)
+    APP_URL = os.environ.get('APP_URL', 'http://localhost:3000')
     
 
 class DevelopmentConfig(Config):

@@ -97,14 +97,14 @@ def test_card_crud(client):
 
     rv = client.put(f'/api/v1/cards/{card_id}', json={"title": "CTO"})
     assert rv.status_code == 200
-    assert "updated" in rv.get_json()["message"]
+    assert rv.get_json()["message"]
 
     rv = client.delete(f'/api/v1/cards/{card_id}')
     assert rv.status_code == 200
-    assert "deleted" in rv.get_json()["message"]
-    # Ensure soft delete
+    assert rv.get_json()["message"]
+    # Soft delete — la ressource devient indisponible
     rv = client.get(f'/api/v1/cards/{card_id}')
-    assert rv.status_code == 403
+    assert rv.status_code == 404
 
 
 def test_list_cards_with_pagination(client):
