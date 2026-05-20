@@ -8,6 +8,8 @@ from app.models import Card, Photo, ScanEvent, QuoteRequest, User, db
 from app.errors import APIError, commit_session, get_or_404
 from app.utils import paginate_query
 from app.services import send_quote_notification_email
+from app.storage import save_file, delete_file, get_file_url
+from app.extensions import limiter
 
 cards_bp = Blueprint('cards', __name__)
 
@@ -139,8 +141,9 @@ def delete_card(card_id):
 # ── Scans ─────────────────────────────────────────────────────────────────────
 
 @cards_bp.route('/<string:card_id>/scan', methods=['POST'])
+@limiter.limit("60 per minute")
 def record_scan(card_id):
-    """Enregistre un scan de carte. Endpoint public (appelé à chaque vue QR)."""
+    """Enregistre un scan de carte QR. Endpoint public, limité à 60/min par IP."""
     card = get_or_404(Card, card_id)
     if card.is_deleted or not card.is_active:
         raise APIError("Carte non disponible.", 404)
@@ -174,7 +177,10 @@ def get_photos(card_id):
     if card.is_deleted:
         raise APIError("Carte non disponible.", 404)
     photos = Photo.query.filter_by(card_id=card_id).order_by(Photo.created_at).all()
-    return jsonify([p.serialize() for p in photos])
+    return jsonify([
+        {**p.serialize(), 'url': get_file_url(p.filename)}
+        for p in photos
+    ])
 
 
 @cards_bp.route('/<string:card_id>/photos', methods=['POST'])
@@ -200,9 +206,7 @@ def upload_photo(card_id):
     caption = (request.form.get('caption') or '')[:200]
 
     unique_filename = f"card_{card_id}_{uuid.uuid4().hex}.{ext}"
-    upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'photos')
-    os.makedirs(upload_folder, exist_ok=True)
-    file.save(os.path.join(upload_folder, unique_filename))
+    save_file(file, unique_filename, folder='photos')
 
     photo = Photo(
         card_id=card_id,
@@ -212,7 +216,12 @@ def upload_photo(card_id):
     )
     db.session.add(photo)
     commit_session("Impossible d'enregistrer la photo.")
-    return jsonify({'message': 'Photo ajoutée.', 'id': photo.id, 'filename': unique_filename}), 201
+    return jsonify({
+        'message': 'Photo ajoutée.',
+        'id': photo.id,
+        'filename': unique_filename,
+        'url': get_file_url(unique_filename),
+    }), 201
 
 
 @cards_bp.route('/<string:card_id>/photos/<int:photo_id>', methods=['DELETE'])
@@ -226,10 +235,7 @@ def delete_photo(card_id, photo_id):
     if photo.card_id != card_id:
         raise APIError("Non autorisé.", 403)
 
-    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'photos', photo.filename)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
+    delete_file(photo.filename, folder='photos')
     db.session.delete(photo)
     commit_session("Impossible de supprimer la photo.")
     return jsonify({'message': 'Photo supprimée.'})
@@ -238,8 +244,9 @@ def delete_photo(card_id, photo_id):
 # ── Demandes de soumission ─────────────────────────────────────────────────────
 
 @cards_bp.route('/<string:card_id>/quote', methods=['POST'])
+@limiter.limit("10 per minute")
 def request_quote(card_id):
-    """Envoie une demande de soumission au professionnel. Endpoint public."""
+    """Envoie une demande de soumission au professionnel. Public, limité à 10/min par IP."""
     card = get_or_404(Card, card_id)
     if card.is_deleted or not card.is_active:
         raise APIError("Carte non disponible.", 404)

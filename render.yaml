@@ -21,12 +21,35 @@ services:
           name: cartepro-redis
           property: connectionString
       - key: CORS_ORIGINS
-        value: https://example.com
+        value: https://cartepro.ca
+      - key: APP_URL
+        value: https://cartepro.ca
+      # Stripe — à renseigner manuellement dans le dashboard Render
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_PUBLIC_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_MONTHLY_PRICE_ID
+        sync: false
+      - key: STRIPE_ANNUAL_PRICE_ID
+        sync: false
+      # Email — à renseigner manuellement
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        value: noreply@cartepro.ca
+      # Stockage S3 / Cloudflare R2 (optionnel — laisser vide pour stockage local)
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_ENDPOINT_URL
         sync: false
 
   - type: redis

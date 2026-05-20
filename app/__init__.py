@@ -18,6 +18,7 @@ import os
 import stripe
 from dotenv import load_dotenv
 from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
+
 try:
     from flasgger import Swagger
     _flasgger_available = True
@@ -25,14 +26,24 @@ except ImportError:
     _flasgger_available = False
 
 
-
 load_dotenv()
+
+
+def _validate_production_config(app):
+    """Lève une exception au démarrage si des variables critiques sont manquantes en production."""
+    required = ['SECRET_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET']
+    missing = [k for k in required if not app.config.get(k)]
+    if missing:
+        raise RuntimeError(
+            f"Variables d'environnement manquantes en production : {', '.join(missing)}"
+        )
+
+
 def create_app(config_class: type[Config] = Config) -> Flask:
     """Application factory."""
 
     env = os.environ.get("FLASK_ENV")
 
-    # Détermination automatique de la configuration si celle par défaut est utilisée
     if config_class is Config:
         if env == "production":
             config_class = ProductionConfig
@@ -45,21 +56,23 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app = Flask(__name__, instance_relative_config=True, template_folder=template_path)
     app.config.from_object(config_class)
 
-    # Dossier instance
     os.makedirs(app.instance_path, exist_ok=True)
 
     if not app.config.get('SQLALCHEMY_DATABASE_URI'):
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'app.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = (
+            'sqlite:///' + os.path.join(app.instance_path, 'app.db')
+        )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.secret_key = app.config['SECRET_KEY']
     app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
+
     log_file = os.path.join(app.instance_path, 'app.log')
     logger.add(log_file)
 
-    if app.config.get("ENV_NAME") == "production" and not app.config.get("SECRET_KEY"):
-        raise RuntimeError("SECRET_KEY must be configured in production.")
+    if app.config.get('ENV_NAME') == 'production':
+        _validate_production_config(app)
 
-    # Initialisation des extensions
+    # Extensions
     stripe.api_key = app.config['STRIPE_SECRET_KEY']
     db.init_app(app)
     migrate.init_app(app, db)
@@ -78,27 +91,33 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     limiter.init_app(app)
 
     # Blueprints
-    def register_routes(app):
-        app.register_blueprint(auth_routes, url_prefix='/auth')
-        app.register_blueprint(cards_bp, url_prefix='/api/v1/cards')
-        app.register_blueprint(qr_bp, url_prefix='/api/v1/qr')
-        app.register_blueprint(stripe_bp, url_prefix='/api/v1/stripe')
-        app.register_blueprint(admin_bp, url_prefix='/api/v1/admin')
-        app.register_blueprint(public_bp)   # index, /view/:id, etc.
-        app.register_blueprint(health_bp)
+    app.register_blueprint(auth_routes, url_prefix='/auth')
+    app.register_blueprint(cards_bp, url_prefix='/api/v1/cards')
+    app.register_blueprint(qr_bp, url_prefix='/api/v1/qr')
+    app.register_blueprint(stripe_bp, url_prefix='/api/v1/stripe')
+    app.register_blueprint(admin_bp, url_prefix='/api/v1/admin')
+    app.register_blueprint(public_bp)
+    app.register_blueprint(health_bp)
 
-    register_routes(app)                                    # Routes API
-
-
- 
-    # User loader
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
     register_error_handlers(app)
 
-    # Création DB
+    # Headers de sécurité HTTP sur toutes les réponses
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        if app.config.get('ENV_NAME') == 'production':
+            response.headers['Strict-Transport-Security'] = (
+                'max-age=31536000; includeSubDomains'
+            )
+        return response
+
     with app.app_context():
         db.create_all()
 
@@ -118,6 +137,4 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         }
         Swagger(app, config=swagger_config)
 
-
     return app
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
