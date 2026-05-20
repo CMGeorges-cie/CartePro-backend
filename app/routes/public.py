@@ -8,12 +8,7 @@ public_bp = Blueprint('main', __name__)
 def index():
     return render_template('index.html')
 
-@public_bp.route('/view/<int:card_id>')
+@public_bp.route('/view/<string:card_id>')
 def view_card(card_id):
     card = get_or_404(Card, card_id)
     return render_template('view_card.html', card=card)
-
-
-@public_bp.route('/health')
-def health():
-    return {'status': 'ok'}

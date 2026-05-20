@@ -16,39 +16,40 @@ def list_cards():
 @login_required
 def create_card():
     """
-    Create Business Card
-
-    -tags:
-        - Cards
+    Créer une carte professionnelle.
+    ---
+    tags:
+      - Cards
     parameters:
-        - in: body 
-            name: card
-            description: Card details
-            schema:
-                type: object
-                properties:
-                name:
-                    type: string
-                email:
-                    type: string
-                title:
-                    type: string
-                phone:
-                    type: string
-                website:
-                    type: string
-                instagram:
-                    type: string
-                linkedin:
-                    type: string
+      - in: body
+        name: card
+        description: Informations de la carte
+        schema:
+          type: object
+          required:
+            - name
+            - email
+            - title
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            title:
+              type: string
+            phone:
+              type: string
+            website:
+              type: string
+            instagram:
+              type: string
+            linkedin:
+              type: string
     responses:
-        201:
-            description: Card created
-        403:
-            description: Card limit reached (for non-pro users)
-    security:
-        - bearerAuth: []
-         
+      201:
+        description: Carte créée
+      403:
+        description: Limite de cartes atteinte (plan gratuit)
     """
 
     data = request.get_json(silent=True) or {}

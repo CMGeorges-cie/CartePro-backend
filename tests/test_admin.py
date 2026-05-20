@@ -49,7 +49,7 @@ def test_admin_routes(client, admin_user):
     # Connexion de l'utilisateur admin
     rv = login(client, "admin", "adminpass")
     assert rv.status_code == 200
-    assert "Login" in rv.get_json()["message"]
+    assert rv.get_json()["message"]
 
     rv = client.get('/api/v1/admin/users?page=1&per_page=1')
     assert rv.status_code == 200

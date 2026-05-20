@@ -56,7 +56,6 @@ class User(UserMixin, db.Model):
 
     @property
     def is_pro(self) -> bool:
-        """Return True if the user has an active subscription."""
         return any(sub.status == 'active' for sub in self.subscriptions)
 
     @property
@@ -64,42 +63,27 @@ class User(UserMixin, db.Model):
         active = next((s for s in self.subscriptions if s.status == 'active'), None)
         return active.status if active else 'none'
 
-    def serialize(self):
-        return {
-            "id": self.id,
-            "username": self.username,
-            "email": self.email,
-            "role": self.role,
-            "stripe_customer_id": self.stripe_customer_id,
-            "is_admin": self.is_admin,
-            "avatar_filename": self.avatar_filename,
-            "is_pro": self.is_pro,
-            "subscription_status": self.subscription_status,
-        }
-
     def set_password(self, password):
-        """Crée un hash sécurisé du mot de passe."""
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        """Vérifie si le mot de passe fourni correspond au hash."""
         return check_password_hash(self.password_hash, password)
 
-    def __repr__(self):
-        return f'<User {self.username}>'
-    
     def serialize(self):
-        """Serialize the user object to a dictionary."""
         return {
             'id': self.id,
             'username': self.username,
             'email': self.email,
             'role': self.role,
             'is_admin': self.is_admin,
+            'stripe_customer_id': self.stripe_customer_id,
             'avatar_filename': self.avatar_filename,
             'is_pro': self.is_pro,
-            'subscription_status': self.subscription_status
+            'subscription_status': self.subscription_status,
         }
+
+    def __repr__(self):
+        return f'<User {self.username}>'
     
 class Subscription(db.Model):
     __tablename__ = 'subscriptions'

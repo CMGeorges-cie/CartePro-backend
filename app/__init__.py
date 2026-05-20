@@ -9,15 +9,20 @@ from .routes.admin import admin_bp
 from .routes.stripe import stripe_bp
 from .routes.qr import qr_bp
 from .routes.public import public_bp
+from .health import health_bp
 from .admin import admin
 from .errors import register_error_handlers
 from .models import User
-from .extensions import db, login_manager, limiter
+from .extensions import db, migrate, login_manager, limiter
 import os
 import stripe
 from dotenv import load_dotenv
 from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
-from flasgger import Swagger
+try:
+    from flasgger import Swagger
+    _flasgger_available = True
+except ImportError:
+    _flasgger_available = False
 
 
 
@@ -57,6 +62,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     # Initialisation des extensions
     stripe.api_key = app.config['STRIPE_SECRET_KEY']
     db.init_app(app)
+    migrate.init_app(app, db)
     CSRFProtect(app)
     CORS(
         app,
@@ -78,7 +84,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         app.register_blueprint(qr_bp, url_prefix='/api/v1/qr')
         app.register_blueprint(stripe_bp, url_prefix='/api/v1/stripe')
         app.register_blueprint(admin_bp, url_prefix='/api/v1/admin')
-        app.register_blueprint(public_bp)  # index, /view/:id, etc.
+        app.register_blueprint(public_bp)   # index, /view/:id, etc.
+        app.register_blueprint(health_bp)
 
     register_routes(app)                                    # Routes API
 
@@ -95,23 +102,21 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     with app.app_context():
         db.create_all()
 
-   # API documentation
-    # Swagger docs
-    swagger_config = {
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": "apispec_1",
-            "route": "/apispec_1.json", 
-            "rule_filter": lambda rule: True,
-            "model_filter": lambda tag: True,
+    if _flasgger_available:
+        swagger_config = {
+            "headers": [],
+            "specs": [
+                {
+                    "endpoint": "apispec_1",
+                    "route": "/apispec_1.json",
+                    "rule_filter": lambda rule: True,
+                    "model_filter": lambda tag: True,
+                }
+            ],
+            "swagger_ui": True,
+            "specs_route": "/docs",
         }
-    ],
-    "swagger_ui": True,
-    "specs_route": "/docs",
-    }
-
-    Swagger(app, config=swagger_config)
+        Swagger(app, config=swagger_config)
 
 
     return app

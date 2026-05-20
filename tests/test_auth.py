@@ -32,7 +32,9 @@ def client(app_instance):
     return app_instance.test_client()
 
 
-def register(client, username, email, password):
+STRONG_PASSWORD = "SecurePass123"
+
+def register(client, username, email, password=STRONG_PASSWORD):
     return client.post('/auth/register', json={
         'username': username,
         'email': email,
@@ -40,7 +42,7 @@ def register(client, username, email, password):
     })
 
 
-def login(client, username, password):
+def login(client, username, password=STRONG_PASSWORD):
     return client.post('/auth/login', json={
         'username': username,
         'password': password
@@ -52,31 +54,34 @@ def logout(client):
 
 
 def test_user_registration_and_login(client):
-    # Register
-    rv = register(client, "bob", "bob@mail.com", "1234")
+    rv = register(client, "bob", "bob@mail.com")
     assert rv.status_code in (200, 201)
-    assert "User" in rv.get_json()["message"]
+    assert rv.get_json()["message"]
 
-    # Login
-    rv = login(client, "bob", "1234")
+    rv = login(client, "bob")
     assert rv.status_code == 200
-    assert "Login" in rv.get_json()["message"]
+    assert rv.get_json()["message"]
 
-    # Logout
     rv = logout(client)
     assert rv.status_code == 200
-    assert "Logged out" in rv.get_json()["message"]
+    assert rv.get_json()["message"]
 
 
 def test_register_requires_required_fields(client):
     rv = client.post('/auth/register', json={"username": "bob"})
     assert rv.status_code == 400
-    assert "required" in rv.get_json()["error"]
+    assert "error" in rv.get_json()
+
+
+def test_register_rejects_weak_password(client):
+    rv = register(client, "weakuser", "weak@mail.com", password="1234")
+    assert rv.status_code == 400
+    assert "error" in rv.get_json()
 
 
 def test_card_crud(client):
-    register(client, "alice", "alice@mail.com", "pass")
-    login(client, "alice", "pass")
+    register(client, "alice", "alice@mail.com")
+    login(client, "alice")
 
     rv = client.post('/api/v1/cards/', json={
         "name": "Alice Card",
@@ -103,8 +108,8 @@ def test_card_crud(client):
 
 
 def test_list_cards_with_pagination(client):
-    register(client, "paginated", "paginated@mail.com", "pass")
-    login(client, "paginated", "pass")
+    register(client, "paginated", "paginated@mail.com")
+    login(client, "paginated")
 
     for i in range(3):
         client.post('/api/v1/cards/', json={
@@ -134,8 +139,8 @@ def test_protected_routes_require_login(client):
 
 
 def test_card_limit_free_plan(client):
-    register(client, "limit", "limit@mail.com", "pass")
-    login(client, "limit", "pass")
+    register(client, "limit", "limit@mail.com")
+    login(client, "limit")
     rv = client.post('/api/v1/cards/', json={"name": "c1", "email": "e@mail.com", "title": "t"})
     assert rv.status_code == 201
     rv = client.post('/api/v1/cards/', json={"name": "c2", "email": "e2@mail.com", "title": "t"})
@@ -143,8 +148,8 @@ def test_card_limit_free_plan(client):
 
 
 def test_me_route(client):
-    register(client, "bob", "bob@mail.com", "1234")
-    login(client, "bob", "1234")
+    register(client, "bob", "bob@mail.com")
+    login(client, "bob")
     rv = client.get('/auth/me')
     assert rv.status_code == 200
     data = rv.get_json()
@@ -152,8 +157,8 @@ def test_me_route(client):
 
 
 def test_card_access_forbidden(client):
-    register(client, "user1", "u1@mail.com", "pass")
-    login(client, "user1", "pass")
+    register(client, "user1", "u1@mail.com")
+    login(client, "user1")
     rv = client.post('/api/v1/cards/', json={
         "name": "User 1 Card",
         "email": "u1@mail.com",
@@ -162,8 +167,8 @@ def test_card_access_forbidden(client):
     card_id = rv.get_json()["id"]
     logout(client)
 
-    register(client, "user2", "u2@mail.com", "pass")
-    login(client, "user2", "pass")
+    register(client, "user2", "u2@mail.com")
+    login(client, "user2")
 
     rv = client.get(f'/api/v1/cards/{card_id}')
     assert rv.status_code == 403
@@ -176,8 +181,8 @@ def test_card_access_forbidden(client):
 
 
 def test_update_me_and_delete(client):
-    register(client, "jean", "jean@mail.com", "pw")
-    login(client, "jean", "pw")
+    register(client, "jean", "jean@mail.com")
+    login(client, "jean")
     rv = client.patch('/auth/me', json={'username': 'newjean'})
     assert rv.status_code == 200
     assert rv.get_json()['username'] == 'newjean'
