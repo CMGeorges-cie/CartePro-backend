@@ -9,6 +9,7 @@ from .routes.admin import admin_bp
 from .routes.stripe import stripe_bp
 from .routes.qr import qr_bp
 from .routes.public import public_bp
+from .routes.crm import crm_bp
 from .health import health_bp
 from .admin import admin
 from .errors import register_error_handlers
@@ -96,6 +97,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(qr_bp, url_prefix='/api/v1/qr')
     app.register_blueprint(stripe_bp, url_prefix='/api/v1/stripe')
     app.register_blueprint(admin_bp, url_prefix='/api/v1/admin')
+    app.register_blueprint(crm_bp, url_prefix='/api/v1/crm')
     app.register_blueprint(public_bp)
     app.register_blueprint(health_bp)
 

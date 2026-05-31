@@ -11,6 +11,9 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
+PIPELINE_STAGES = ('new', 'contacted', 'quote_sent', 'won', 'lost')
+
+
 class Card(db.Model):
     __tablename__ = 'cards'
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
@@ -21,9 +24,8 @@ class Card(db.Model):
     website = db.Column(db.String(200), nullable=True)
     instagram = db.Column(db.String(100), nullable=True)
     linkedin = db.Column(db.String(200), nullable=True)
-    # Champs CartePro Pro — entrepreneurs en services manuels
-    trade = db.Column(db.String(50), nullable=True)            # peintre, électricien, etc.
-    service_zone = db.Column(db.String(200), nullable=True)    # ex: "Rive-Sud, Montréal"
+    trade = db.Column(db.String(50), nullable=True)
+    service_zone = db.Column(db.String(200), nullable=True)
     bio = db.Column(db.Text, nullable=True)
     google_review_url = db.Column(db.String(300), nullable=True)
     facebook_url = db.Column(db.String(300), nullable=True)
@@ -71,6 +73,8 @@ class User(UserMixin, db.Model):
     avatar_filename = db.Column(db.String(200), nullable=True)
     cards = db.relationship('Card', backref='user', lazy=True)
     subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+    contacts = db.relationship('Contact', backref='user', lazy=True)
+    tasks = db.relationship('Task', backref='user', lazy=True)
 
     @property
     def is_pro(self) -> bool:
@@ -110,7 +114,7 @@ class Subscription(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     plan_name = db.Column(db.String(50), nullable=False)
     stripe_subscription_id = db.Column(db.String(120), unique=True, nullable=False)
-    status = db.Column(db.String(20), default='active')  # active, canceled, past_due
+    status = db.Column(db.String(20), default='active')
     current_period_end = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
@@ -122,7 +126,7 @@ class ScanEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     card_id = db.Column(db.String(36), db.ForeignKey('cards.id'), nullable=False)
     scanned_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
-    ip_address = db.Column(db.String(45), nullable=True)   # IPv6 = max 45 chars
+    ip_address = db.Column(db.String(45), nullable=True)
     user_agent = db.Column(db.String(300), nullable=True)
     city = db.Column(db.String(100), nullable=True)
 
@@ -143,7 +147,7 @@ class Photo(db.Model):
     card_id = db.Column(db.String(36), db.ForeignKey('cards.id'), nullable=False)
     filename = db.Column(db.String(200), nullable=False)
     caption = db.Column(db.String(200), nullable=True)
-    photo_type = db.Column(db.String(10), default='after')  # 'before' ou 'after'
+    photo_type = db.Column(db.String(10), default='after')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
 
     def serialize(self):
@@ -175,5 +179,95 @@ class QuoteRequest(db.Model):
             'requester_phone': self.requester_phone,
             'requester_email': self.requester_email,
             'message': self.message,
+            'created_at': self.created_at.isoformat(),
+        }
+
+
+# ── CRM ───────────────────────────────────────────────────────────────────────
+
+class Contact(db.Model):
+    __tablename__ = 'contacts'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=True)
+    email = db.Column(db.String(120), nullable=True, index=True)
+    phone = db.Column(db.String(20), nullable=True)
+    company = db.Column(db.String(100), nullable=True)
+    address = db.Column(db.String(200), nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    pipeline_stage = db.Column(db.String(30), default='new')
+    source = db.Column(db.String(30), nullable=True)  # scan | quote_request | manual | import
+    quote_request_id = db.Column(db.Integer, db.ForeignKey('quote_requests.id'), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow,
+                           onupdate=datetime.datetime.utcnow)
+    notes = db.relationship('ContactNote', backref='contact', lazy=True,
+                            cascade='all, delete-orphan')
+    tasks = db.relationship('Task', backref='contact', lazy=True)
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name or ''}".strip()
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'full_name': self.full_name,
+            'email': self.email,
+            'phone': self.phone,
+            'company': self.company,
+            'address': self.address,
+            'city': self.city,
+            'pipeline_stage': self.pipeline_stage,
+            'source': self.source,
+            'quote_request_id': self.quote_request_id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+        }
+
+
+class ContactNote(db.Model):
+    __tablename__ = 'contact_notes'
+    id = db.Column(db.Integer, primary_key=True)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'contact_id': self.contact_id,
+            'content': self.content,
+            'created_at': self.created_at.isoformat(),
+        }
+
+
+class Task(db.Model):
+    __tablename__ = 'tasks'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=True)
+    is_done = db.Column(db.Boolean, default=False)
+    priority = db.Column(db.String(10), default='medium')  # low | medium | high
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'contact_id': self.contact_id,
+            'title': self.title,
+            'description': self.description,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'is_done': self.is_done,
+            'priority': self.priority,
             'created_at': self.created_at.isoformat(),
         }
