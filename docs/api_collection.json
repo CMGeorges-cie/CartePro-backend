@@ -1,0 +1,504 @@
+{
+  "info": {
+    "name": "CartePro Pro — API complète",
+    "description": "Collection Postman pour l'API CartePro Pro. Importez ce fichier dans Postman ou Insomnia.\n\n**Base URL locale** : http://localhost:5000\n**Base URL Render** : https://cartepro-api.onrender.com\n\nTous les endpoints (sauf /public/* et /health) nécessitent une session active.\nConnectez-vous d'abord via POST /auth/login pour obtenir le cookie de session.",
+    "version": "4.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "cardId", "value": "" },
+    { "key": "contactId", "value": "1" },
+    { "key": "taskId", "value": "1" },
+    { "key": "noteId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "🏥 Santé",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Vérifie que l'API est en ligne. Retourne 200 avec {'status': 'ok'}."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentification",
+      "item": [
+        {
+          "name": "Inscription",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jean_peintre\",\n  \"email\": \"jean@example.com\",\n  \"password\": \"MonMotDePasse123\"\n}"
+            },
+            "description": "Crée un nouveau compte. Mot de passe minimum 8 caractères."
+          }
+        },
+        {
+          "name": "Connexion",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jean_peintre\",\n  \"password\": \"MonMotDePasse123\"\n}"
+            },
+            "description": "Authentifie l'utilisateur. Le cookie de session est automatiquement géré par Postman."
+          }
+        },
+        {
+          "name": "Profil (moi)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Retourne le profil de l'utilisateur connecté."
+          }
+        },
+        {
+          "name": "Déconnexion",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        },
+        {
+          "name": "Changer mot de passe",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/auth/password",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"MonMotDePasse123\",\n  \"new_password\": \"NouveauMotDePasse456\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Cartes numériques",
+      "item": [
+        {
+          "name": "Liste des cartes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cards?page=1",
+              "query": [{ "key": "page", "value": "1" }],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cards"]
+            }
+          }
+        },
+        {
+          "name": "Créer une carte",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/cards/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jean Tremblay\",\n  \"title\": \"Maître Peintre\",\n  \"email\": \"jean@jeanpeinture.ca\",\n  \"phone\": \"514-555-0101\",\n  \"trade\": \"Peintre en bâtiment\",\n  \"service_zone\": \"Montréal et Rive-Sud\",\n  \"bio\": \"15 ans d'expérience en peinture résidentielle et commerciale.\",\n  \"website\": \"https://jeanpeinture.ca\",\n  \"google_review_url\": \"https://g.page/r/jeanpeinture\",\n  \"whatsapp_number\": \"5145550101\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Détail carte",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}"
+          }
+        },
+        {
+          "name": "Modifier carte",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Nouvelle description.\",\n  \"phone\": \"514-555-9999\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Supprimer carte (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}"
+          }
+        },
+        {
+          "name": "QR Code (PNG)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/qr",
+            "description": "Retourne une image PNG du QR code de la carte."
+          }
+        },
+        {
+          "name": "Enregistrer un scan",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/scan"
+          }
+        },
+        {
+          "name": "Statistiques de scans",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/scans"
+          }
+        },
+        {
+          "name": "Photos — Liste",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/photos"
+          }
+        },
+        {
+          "name": "Photos — Ajouter (multipart)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/photos",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "photo", "type": "file", "src": "" },
+                { "key": "caption", "value": "Salon après peinture", "type": "text" },
+                { "key": "photo_type", "value": "after", "type": "text" }
+              ]
+            },
+            "description": "photo_type: 'before' ou 'after'"
+          }
+        },
+        {
+          "name": "Photos — Supprimer",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/photos/1"
+          }
+        },
+        {
+          "name": "Demande de soumission (public)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/quote",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requester_name\": \"Marie Côté\",\n  \"requester_email\": \"marie@example.com\",\n  \"requester_phone\": \"450-555-0202\",\n  \"message\": \"Bonjour, j'aimerais une soumission pour peinturer mon salon.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Lister les soumissions reçues",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/quotes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔵 Vue publique",
+      "item": [
+        {
+          "name": "Page publique de la carte",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/public/view/{{cardId}}",
+            "description": "Retourne les données publiques de la carte (sans auth). Utilisé par le QR code."
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Stripe / Abonnements",
+      "item": [
+        {
+          "name": "Config Stripe (clé publique)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/stripe/config",
+            "description": "Retourne la clé publique Stripe et les price IDs."
+          }
+        },
+        {
+          "name": "Créer session Checkout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/stripe/create-checkout",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan\": \"monthly\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "plan: 'monthly' (15$/mois) ou 'annual' (120$/an)\nRetourne checkout_url — rediriger l'utilisateur vers cette URL."
+          }
+        },
+        {
+          "name": "Portail de facturation",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/stripe/portal",
+            "description": "Retourne portal_url — permet à l'utilisateur de gérer/annuler son abonnement."
+          }
+        },
+        {
+          "name": "Webhook Stripe (interne)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/stripe/webhook",
+            "description": "Endpoint pour les webhooks Stripe. Ne pas appeler manuellement.\nÉvénements gérés: checkout.session.completed, customer.subscription.deleted"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 CRM — Dashboard",
+      "item": [
+        {
+          "name": "Dashboard CRM",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/crm/dashboard",
+            "description": "Retourne: pipeline (compteurs par étape), tasks_due_today, total_contacts, conversion_rate."
+          }
+        },
+        {
+          "name": "Pipeline kanban",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/crm/pipeline",
+            "description": "Retourne tous les contacts groupés par étape: {new: [...], contacted: [...], quote_sent: [...], won: [...], lost: [...]}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 CRM — Contacts",
+      "item": [
+        {
+          "name": "Lister contacts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crm/contacts?page=1&stage=new&q=tremblay",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "stage", "value": "new", "description": "Filtrer: new|contacted|quote_sent|won|lost" },
+                { "key": "q", "value": "tremblay", "description": "Recherche nom/email/tél/ville" },
+                { "key": "source", "value": "", "disabled": true },
+                { "key": "sort", "value": "created_at", "disabled": true },
+                { "key": "order", "value": "desc", "disabled": true }
+              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "crm", "contacts"]
+            }
+          }
+        },
+        {
+          "name": "Créer contact",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/crm/contacts",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Marie\",\n  \"last_name\": \"Côté\",\n  \"email\": \"marie@example.com\",\n  \"phone\": \"450-555-0202\",\n  \"company\": \"Résidences Côté\",\n  \"city\": \"Laval\",\n  \"source\": \"qr_scan\",\n  \"pipeline_stage\": \"new\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Détail contact",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "Modifier contact",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/{{contactId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"450-555-9999\",\n  \"city\": \"Montréal\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Changer étape pipeline",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/{{contactId}}/stage",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"quote_sent\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Étapes valides: new → contacted → quote_sent → won | lost"
+          }
+        },
+        {
+          "name": "Supprimer contact",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "Convertir soumission → contact",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/from-quote/1",
+            "description": "Transforme une QuoteRequest reçue via carte en contact CRM."
+          }
+        },
+        {
+          "name": "Importer CSV",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/import",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "CSV UTF-8. Colonnes FR ou EN acceptées.\nFR: prénom, nom, courriel, téléphone, entreprise, ville\nEN: first_name, last_name, email, phone, company, city\n\nUne colonne 'name' (nom complet) est aussi acceptée."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Exporter CSV",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/export",
+            "description": "Télécharge un CSV avec tous les contacts (en-têtes français)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 CRM — Notes",
+      "item": [
+        {
+          "name": "Lister notes d'un contact",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/{{contactId}}/notes"
+          }
+        },
+        {
+          "name": "Ajouter une note",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/crm/contacts/{{contactId}}/notes",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"A appelé pour demander une soumission pour la cuisine.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Supprimer une note",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/crm/notes/{{noteId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "✅ CRM — Tâches",
+      "item": [
+        {
+          "name": "Lister tâches",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crm/tasks?done=false&due_today=false&priority=high&contact_id=",
+              "query": [
+                { "key": "done", "value": "false", "description": "true | false" },
+                { "key": "due_today", "value": "false", "description": "true pour tâches du jour" },
+                { "key": "priority", "value": "high", "description": "low | medium | high", "disabled": true },
+                { "key": "contact_id", "value": "", "description": "Filtrer par contact", "disabled": true }
+              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "crm", "tasks"]
+            }
+          }
+        },
+        {
+          "name": "Créer tâche",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/crm/tasks",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Rappeler Marie Côté\",\n  \"description\": \"Confirmer date de début des travaux\",\n  \"priority\": \"high\",\n  \"due_date\": \"2026-06-05\",\n  \"contact_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "priority: low | medium | high\ndue_date: YYYY-MM-DD (optionnel)"
+          }
+        },
+        {
+          "name": "Détail tâche",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/crm/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Modifier tâche",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/v1/crm/tasks/{{taskId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"medium\",\n  \"due_date\": \"2026-06-10\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Marquer tâche comme faite / à faire",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/crm/tasks/{{taskId}}/done",
+            "description": "Toggle: si is_done=false → true, et inversement."
+          }
+        },
+        {
+          "name": "Supprimer tâche",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/crm/tasks/{{taskId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

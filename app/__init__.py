@@ -120,9 +120,6 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             )
         return response
 
-    with app.app_context():
-        db.create_all()
-
     if _flasgger_available:
         swagger_config = {
             "headers": [],
