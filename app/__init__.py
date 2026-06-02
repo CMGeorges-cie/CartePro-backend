@@ -77,7 +77,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     stripe.api_key = app.config['STRIPE_SECRET_KEY']
     db.init_app(app)
     migrate.init_app(app, db)
-    CSRFProtect(app)
+    csrf = CSRFProtect(app)
+    # Les blueprints API JSON sont exemptés du CSRF (protection inutile pour REST+cookies SameSite)
+    for bp in [auth_routes, cards_bp, qr_bp, stripe_bp, admin_bp, crm_bp, public_bp, health_bp]:
+        csrf.exempt(bp)
     CORS(
         app,
         resources={

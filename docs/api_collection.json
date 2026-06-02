@@ -140,9 +140,14 @@
         {
           "name": "QR Code (PNG)",
           "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/v1/cards/{{cardId}}/qr",
-            "description": "Retourne une image PNG du QR code de la carte."
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/qr/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"{{baseUrl}}/view/{{cardId}}\"\n}"
+            },
+            "description": "Retourne une image PNG du QR code. Passer l'URL publique de la carte dans le corps."
           }
         },
         {
@@ -218,8 +223,8 @@
           "name": "Page publique de la carte",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/public/view/{{cardId}}",
-            "description": "Retourne les données publiques de la carte (sans auth). Utilisé par le QR code."
+            "url": "{{baseUrl}}/view/{{cardId}}",
+            "description": "Page HTML publique de la carte (sans auth). C'est l'URL encodée dans le QR code."
           }
         }
       ]

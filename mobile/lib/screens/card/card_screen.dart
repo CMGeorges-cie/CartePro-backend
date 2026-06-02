@@ -67,7 +67,7 @@ class _CardView extends StatelessWidget {
   final WidgetRef ref;
   const _CardView({required this.card, required this.ref});
 
-  String get _publicUrl => '${ApiConfig.baseUrl}/public/view/${card.id}';
+  String get _publicUrl => '${ApiConfig.baseUrl}/view/${card.id}';
 
   @override
   Widget build(BuildContext context) {
