@@ -5,10 +5,13 @@ on:
     branches: [main, dev, 'claude/**']
     paths:
       - 'mobile/**'
+      - '.github/workflows/flutter.yml'
   pull_request:
     branches: [main, dev]
     paths:
       - 'mobile/**'
+      - '.github/workflows/flutter.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
