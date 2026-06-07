@@ -36,23 +36,11 @@ flask python sqlalchemy stripe qr-code saas rest-api authentication flask-admin 
 
 ## 📸 Captures
 
-> Screenshots and demo GIFs should be stored in `/screenshots`.
->
-> The image links below are ready for recruiter-facing documentation once the files are generated locally and committed.
+Screenshots and demo GIFs will be stored in `/screenshots` after the application is launched locally.
 
-### Health endpoint
+Current status: screenshots are not committed yet. This section intentionally avoids broken image links until real image files are added.
 
-![Health endpoint](screenshots/health.png)
-
-### API routes / backend overview
-
-![API routes](screenshots/api-routes.png)
-
-### Admin or backend demo
-
-![Backend demo](screenshots/demo.gif)
-
-Recommended files:
+Planned files:
 
 ```text
 screenshots/health.png
@@ -60,6 +48,13 @@ screenshots/api-routes.png
 screenshots/admin.png
 screenshots/demo.gif
 ```
+
+Recommended captures:
+
+- Health check endpoint
+- API route overview or API documentation screen
+- Admin screen, if available locally
+- 20-30 second GIF showing the backend running and key endpoints responding
 
 ---
 
@@ -202,6 +197,8 @@ Create a 20-30 second GIF using a local screen recording and FFmpeg:
 ```bash
 ffmpeg -i demo.mov -vf "fps=12,scale=1280:-1:flags=lanczos" screenshots/demo.gif
 ```
+
+After real screenshots are committed, replace the placeholder list in the `Captures` section with Markdown image links.
 
 ---
 
