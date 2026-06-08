@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -32,9 +31,7 @@ class _ContactDetailScreenState extends ConsumerState<ContactDetailScreen> {
       final notesData = await ApiService.instance.getNotes(widget.contactId);
       setState(() {
         _contact = Contact.fromJson(data['contact'] as Map<String, dynamic>? ?? data);
-        _notes = (notesData as List<dynamic>)
-            .map((e) => e as Map<String, dynamic>)
-            .toList();
+        _notes = List<Map<String, dynamic>>.from(notesData as List);
         _loading = false;
       });
     } catch (_) {

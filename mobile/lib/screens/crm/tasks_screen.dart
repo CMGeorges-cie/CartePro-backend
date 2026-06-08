@@ -44,13 +44,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final params = switch (_filter) {
-        'today' => {'due_today': 'true'},
-        'overdue' => {'overdue': 'true'},
-        'done' => {'done': 'true'},
-        _ => <String, dynamic>{},
-      };
-
       Map<String, dynamic> data;
       if (_filter == 'today') {
         data = await ApiService.instance.listTasks(dueToday: true);
